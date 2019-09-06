@@ -22,6 +22,7 @@ const sess = {
 };
 
 if (app.get('env') === 'production') {
+  sess.cookie.secure = true; // If running a production test, comment this out
   sess.cookie.httpOnly = true;
   sess.store = new MongoStore({ mongooseConnection: mongoose.connection });
 }
