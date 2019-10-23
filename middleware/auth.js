@@ -1,3 +1,6 @@
+// Middleware function
+// DESC:  Check if a user is authenticated or not. Will attempt to use a refresh token to reauthenticate. If a user already has an access token, verify it is still valid.
+
 const { refreshToken, getMe } = require('../utils/utils');
 const User = require('../models/User');
 
