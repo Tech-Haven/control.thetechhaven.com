@@ -1,6 +1,12 @@
 const express = require('express');
 const auth = require('../../middleware/auth');
-const { exchangeCode, updateUser, getMe } = require('../../utils/utils');
+const staff = require('../../middleware/staff');
+const {
+  exchangeCode,
+  updateUser,
+  getMe,
+  getGuildMember
+} = require('../../utils/utils');
 
 const router = express.Router();
 
@@ -8,6 +14,8 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const SCOPE = process.env.SCOPE;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 const DASHBOARD_URI = process.env.DASHBOARD_URI;
+
+// PUBLIC API
 
 router.get('/login', (req, res) => {
   res.status(200).json({ CLIENT_ID, SCOPE, REDIRECT_URI });
@@ -41,11 +49,25 @@ router.get('/logout', (req, res) => {
   }
 });
 
+// PRIVATE API
+
 router.get('/users/@me', auth, async (req, res) => {
   try {
     const me = await getMe(req.session.access_token);
     const { id, username, discriminator, avatar } = me;
-    res.json({ id, username, discriminator, avatar });
+    res.status(200).json({ id, username, discriminator, avatar });
+  } catch (err) {
+    res.status(500).json('Server error');
+    console.error(err);
+  }
+});
+
+// STAFF API
+
+router.get('/guild/members/:id', auth, staff, async (req, res) => {
+  try {
+    const guildMember = await getGuildMember(req.params.id);
+    res.status(200).json(guildMember);
   } catch (err) {
     res.status(500).json('Server error');
     console.error(err);

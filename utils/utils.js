@@ -5,8 +5,10 @@ const User = require('../models/User');
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const scope = process.env.SCOPE;
 const redirect_uri = process.env.REDIRECT_URI;
+const GUILD_ID = process.env.GUILD_ID;
 const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
 
 // updateUser()
@@ -74,6 +76,9 @@ const refreshToken = async refresh_token => {
   return r.json();
 };
 
+// getMe()
+// PARAMS: access_token
+// RETURN: User information (id, username, discriminator, avatar)
 const getMe = async access_token => {
   const r = await fetch(`https://discordapp.com/api/users/@me`, {
     method: 'GET',
@@ -87,7 +92,48 @@ const getMe = async access_token => {
   return r.json();
 };
 
+// getGuildMember()
+// PARAMS: userId
+// RETURN: Guild member's information (user object, nickname, roles, when they joined)
+const getGuildMember = async userId => {
+  if(!userId) {
+    return { error: {status: 401, msg: '401: Unauthorized.' }};
+  }
+  const r = await fetch(`https://discordapp.com/api/guilds/${GUILD_ID}/members/${userId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bot ${BOT_TOKEN}`
+    }
+  })
+  const response = await r.json();
+  if(r.status === 404) {
+    return { error: { status: r.status, msg: response.message}}
+  }
+  return response;
+}
+
+// getStaffRoles()
+// PARAMS: NA
+// RETURN: Staff roles for the server.
+// NOTE: Role names are hardcoded. Come up with a better way to check staff role IDs.
+const getStaffRoles = async () => {
+  const r = await fetch(`https://discordapp.com/api/guilds/${GUILD_ID}/roles`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bot ${BOT_TOKEN}`
+    }
+  });
+  const guildRoles = await r.json();
+  var staffRoleFilter = ['Staff', 'Root', 'Server Admin']
+  const staffRoles = guildRoles.filter(role => {
+    return staffRoleFilter.includes(role.name)
+  })
+  return staffRoles;
+}
+
 exports.updateUser = updateUser;
 exports.getMe = getMe;
 exports.exchangeCode = exchangeCode;
 exports.refreshToken = refreshToken;
+exports.getGuildMember = getGuildMember;
+exports.getStaffRoles = getStaffRoles;
