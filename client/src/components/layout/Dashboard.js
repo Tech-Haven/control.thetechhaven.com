@@ -10,6 +10,13 @@ const Dashboard = ({ auth }) => {
   if (!auth.isAuthenticated) {
     return <Redirect to='/login' />;
   }
+
+  const adminLink = (
+    <Link to='/admin' className='btn'>
+      Admin Panel
+    </Link>
+  );
+
   return (
     <Fragment>
       <div className='profile-grid my-1'>
@@ -20,9 +27,12 @@ const Dashboard = ({ auth }) => {
             alt='avatar'
           />
           <h1>Welcome to the dashboard @{auth.user.username}</h1>
-          <Link to='/logout' className='btn btn-light'>
-            Logout
-          </Link>
+          <div>
+            {auth.user.isStaff ? adminLink : null}
+            <Link to='/logout' className='btn btn-light'>
+              Logout
+            </Link>
+          </div>
         </div>
       </div>
     </Fragment>

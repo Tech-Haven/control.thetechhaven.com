@@ -2,7 +2,16 @@ import React, { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-const Navbar = ({ auth: { isAuthenticated, loading } }) => {
+const Navbar = ({ auth }) => {
+  const staffLinks = (
+    <ul>
+      <li>
+        <Link to='/dashboard'>Dashboard</Link>
+        <Link to='/admin'>Admin Panel</Link>
+      </li>
+    </ul>
+  );
+
   const authLinks = (
     <ul>
       <li>
@@ -30,8 +39,14 @@ const Navbar = ({ auth: { isAuthenticated, loading } }) => {
           Blog
         </a>
       </h1>
-      {!loading && (
-        <Fragment>{isAuthenticated ? authLinks : guestLinks}</Fragment>
+      {!auth.loading && (
+        <Fragment>
+          {auth.isAuthenticated
+            ? auth.user.isStaff
+              ? staffLinks
+              : authLinks
+            : guestLinks}
+        </Fragment>
       )}
     </nav>
   );
