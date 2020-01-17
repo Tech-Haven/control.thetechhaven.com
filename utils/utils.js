@@ -92,25 +92,75 @@ const getMe = async access_token => {
   return r.json();
 };
 
+const getGuildMembers = async () => {
+  const r = await fetch(
+    `https://discordapp.com/api/guilds/${GUILD_ID}/members`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bot ${BOT_TOKEN}`
+      }
+    }
+  );
+
+  const response = await r.json();
+  if (r.status === 404) {
+    return { error: { status: r.status, msg: response.message } };
+  }
+  return response;
+};
+
+// isGuildMember()
+// PARAMS: userId
+// RETURN: Boolean value if user is in the server or not
+const checkIfGuildMember = async userId => {
+  const guildMember = await getGuildMember(userId);
+  if (!guildMember.error) {
+    return true;
+  }
+  return false;
+};
+
 // getGuildMember()
 // PARAMS: userId
 // RETURN: Guild member's information (user object, nickname, roles, when they joined)
 const getGuildMember = async userId => {
-  if(!userId) {
-    return { error: {status: 401, msg: '401: Unauthorized.' }};
+  if (!userId) {
+    return { error: { status: 401, msg: '401: Unauthorized.' } };
   }
-  const r = await fetch(`https://discordapp.com/api/guilds/${GUILD_ID}/members/${userId}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bot ${BOT_TOKEN}`
+  const r = await fetch(
+    `https://discordapp.com/api/guilds/${GUILD_ID}/members/${userId}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bot ${BOT_TOKEN}`
+      }
     }
-  })
+  );
   const response = await r.json();
-  if(r.status === 404) {
-    return { error: { status: r.status, msg: response.message}}
+  if (r.status === 404) {
+    return { error: { status: r.status, msg: response.message } };
   }
   return response;
-}
+};
+
+// isStaff()
+// PARAMS: userId
+// RETURN: Boolean value if the user is staff or not
+const checkIfStaff = async userId => {
+  const guildMember = await getGuildMember(userId);
+  if (!guildMember.error) {
+    const staffRoles = await getStaffRoles();
+    const staff = staffRoles.some(r => {
+      return guildMember.roles.includes(r.id);
+    });
+    if (staff) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+};
 
 // getStaffRoles()
 // PARAMS: NA
@@ -124,12 +174,12 @@ const getStaffRoles = async () => {
     }
   });
   const guildRoles = await r.json();
-  var staffRoleFilter = ['Staff', 'Root', 'Server Admin']
+  var staffRoleFilter = ['Staff', 'Root', 'Server Admin'];
   const staffRoles = guildRoles.filter(role => {
-    return staffRoleFilter.includes(role.name)
-  })
+    return staffRoleFilter.includes(role.name);
+  });
   return staffRoles;
-}
+};
 
 exports.updateUser = updateUser;
 exports.getMe = getMe;
@@ -137,3 +187,6 @@ exports.exchangeCode = exchangeCode;
 exports.refreshToken = refreshToken;
 exports.getGuildMember = getGuildMember;
 exports.getStaffRoles = getStaffRoles;
+exports.getGuildMembers = getGuildMembers;
+exports.checkIfGuildMember = checkIfGuildMember;
+exports.checkIfStaff = checkIfStaff;
