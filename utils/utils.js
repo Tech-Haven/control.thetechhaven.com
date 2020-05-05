@@ -1,7 +1,10 @@
 const fetch = require('node-fetch');
+const axios = require('axios')
 const FormData = require('form-data');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
+const xml2js = require('xml2js');
+const parser = new xml2js.Parser();
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -10,6 +13,11 @@ const scope = process.env.SCOPE;
 const redirect_uri = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
 const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
+const ONE_URI = 'http://10.10.1.3:2633/RPC2'
+
+const builder = new xml2js.Builder({
+  renderOpts: { 'pretty': false }
+})
 
 // updateUser()
 // PARAMS: access_token, refresh_token
@@ -181,6 +189,97 @@ const getStaffRoles = async () => {
   return staffRoles;
 };
 
+
+// checkForLoginToken()
+// PARAMS: username, password
+// RETURN: login token if there is one
+
+const checkForLoginToken = async (username, password) => {
+  const data = builder.buildObject({
+    'methodCall': {
+      'methodName': 'one.user.info',
+      'params': {
+        'param': [
+          {
+            'value': `${username}:${password}`
+          },
+          {
+            'value': {
+              'int': -1
+            }
+          }
+        ]
+      }
+    }
+  })
+
+  const infoConfig = {
+    method: 'post',
+    url: `${ONE_URI}`,
+    headers: { 'Content-Type': 'application/xml' },
+    data: data
+  }
+
+  try {
+    const r = await axios(infoConfig)
+    const result = await parser.parseStringPromise(r.data)
+    const stringResult = await parser.parseStringPromise(result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0])
+    if (stringResult.USER.LOGIN_TOKEN[0].TOKEN[0]) {
+      return stringResult.USER.LOGIN_TOKEN[0].TOKEN[0]
+    }
+    return;
+  } catch (error) {
+    console.error(error);
+    return { error };
+  }
+}
+
+
+// getVmInfo()
+// PARAMS: username, token, vmid
+// RETURN: Information on a VM
+const getVmInfo = async (username, token, vmid) => {
+  const data = builder.buildObject({
+    'methodCall': {
+      'methodName': 'one.vm.info',
+      'params': {
+        'param': [
+          {
+            'value': `${username}:${token}`
+          },
+          {
+            'value': {
+              'int': `${vmid}`
+            }
+          }
+        ]
+      }
+    }
+  })
+
+  const config = {
+    method: 'post',
+    url: `${ONE_URI}`,
+    headers: { 'Content-Type': 'application/xml' },
+    data: data
+  }
+
+  try {
+    const r = await axios(config)
+    const result = await parser.parseStringPromise(r.data);
+
+    if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
+      return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
+    }
+
+    const stringResult = await parser.parseStringPromise(result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0])
+    return stringResult;
+  } catch (error) {
+    console.error(error)
+    return { error: { msg: error } }
+  }
+}
+
 exports.updateUser = updateUser;
 exports.getMe = getMe;
 exports.exchangeCode = exchangeCode;
@@ -190,3 +289,5 @@ exports.getStaffRoles = getStaffRoles;
 exports.getGuildMembers = getGuildMembers;
 exports.checkIfGuildMember = checkIfGuildMember;
 exports.checkIfStaff = checkIfStaff;
+exports.checkForLoginToken = checkForLoginToken;
+exports.getVmInfo = getVmInfo;
