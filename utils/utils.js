@@ -195,17 +195,37 @@ const getStaffRoles = async () => {
 // RETURN: login token if there is one
 
 const checkForLoginToken = async (username, password) => {
+  const userInfo = await getUserInfo(username, password);
+
+  if (userInfo.error) {
+    return { error: userInfo.error }
+  }
+
+  const keys = Object.keys(userInfo.USER);
+
+  if (!keys.includes('LOGIN_TOKEN')) {
+    return
+  }
+
+  return userInfo.USER.LOGIN_TOKEN[0].TOKEN[0]
+}
+
+
+// getUserInfo()
+// PARAMS: username, token
+// RETURN: User info from lab
+const getUserInfo = async (username, token) => {
   const data = builder.buildObject({
     'methodCall': {
       'methodName': 'one.user.info',
       'params': {
         'param': [
           {
-            'value': `${username}:${password}`
+            'value': `${username}:${token}`
           },
           {
             'value': {
-              'int': -1
+              'int': `-1`
             }
           }
         ]
@@ -213,7 +233,7 @@ const checkForLoginToken = async (username, password) => {
     }
   })
 
-  const infoConfig = {
+  const config = {
     method: 'post',
     url: `${ONE_URI}`,
     headers: { 'Content-Type': 'application/xml' },
@@ -221,16 +241,18 @@ const checkForLoginToken = async (username, password) => {
   }
 
   try {
-    const r = await axios(infoConfig)
-    const result = await parser.parseStringPromise(r.data)
-    const stringResult = await parser.parseStringPromise(result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0])
-    if (stringResult.USER.LOGIN_TOKEN[0].TOKEN[0]) {
-      return stringResult.USER.LOGIN_TOKEN[0].TOKEN[0]
+    const r = await axios(config)
+    const result = await parser.parseStringPromise(r.data);
+
+    if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
+      return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
     }
-    return;
+
+    const stringResult = await parser.parseStringPromise(result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0])
+    return stringResult;
   } catch (error) {
-    console.error(error);
-    return { error };
+    console.error(error)
+    return { error: { msg: error } }
   }
 }
 
@@ -290,4 +312,5 @@ exports.getGuildMembers = getGuildMembers;
 exports.checkIfGuildMember = checkIfGuildMember;
 exports.checkIfStaff = checkIfStaff;
 exports.checkForLoginToken = checkForLoginToken;
+exports.getUserInfo = getUserInfo;
 exports.getVmInfo = getVmInfo;

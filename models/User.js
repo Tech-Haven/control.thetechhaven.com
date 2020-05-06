@@ -21,6 +21,10 @@ const UserSchema = new Schema({
   refresh_hash: {
     type: String,
     required: true
+  },
+  lab_user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'labUser'
   }
 });
 
