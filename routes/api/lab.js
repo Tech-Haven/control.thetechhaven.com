@@ -1,5 +1,5 @@
 const express = require('express')
-const { check, validationResult } = require('express-validator')
+const { check, param, validationResult } = require('express-validator')
 const axios = require('axios')
 const xml2js = require('xml2js');
 
@@ -137,8 +137,8 @@ router.get('/user/info', labAuth, async (req, res) => {
   res.status(200).send(userObject)
 })
 
-router.post('/vm/info', [
-  check('vmid', 'Please enter a VM ID').exists().isNumeric()
+router.get('/vm/info/:vmid', [
+  param('vmid', 'Please enter a VM ID').exists().isNumeric()
 ], labAuth, async (req, res) => {
 
   const errors = validationResult(req);
@@ -146,7 +146,7 @@ router.post('/vm/info', [
     return res.status(422).json({ errors: errors.array() })
   }
 
-  const vmObject = await getVmInfo(req.session.lab_username, req.session.lab_token, req.body.vmid)
+  const vmObject = await getVmInfo(req.session.lab_username, req.session.lab_token, req.params.vmid)
 
   if (vmObject.error) {
     return res.status(400).send(vmObject.error)
