@@ -4,6 +4,7 @@ const FormData = require('form-data');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const xml2js = require('xml2js');
+const sshpk = require('sshpk')
 const parser = new xml2js.Parser();
 
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -210,6 +211,200 @@ const checkForLoginToken = async (username, password) => {
   return userInfo.USER.LOGIN_TOKEN[0].TOKEN[0]
 }
 
+const getSSHKey = async (username, token) => {
+  const user = await getUserInfo(username, token);
+
+  if (user.error) {
+    return { error: user.error }
+  }
+
+  const sshKey = user.USER.TEMPLATE[0].SSH_PUBLIC_KEY[0];
+  return sshKey;
+}
+
+const updateSSHKey = async (username, token, key) => {
+
+  // Verify input is a ssh public key
+  try {
+    sshpk.parseKey(key, 'ssh')
+  } catch (error) {
+    return { error: 'Invalid key' }
+  }
+
+  const user = await getUserInfo(username, token);
+
+  if (user.error) {
+    console.error(user.error)
+    return { error: user.error }
+  }
+
+  const userID = user.USER.ID[0];
+
+  const data = builder.buildObject({
+    'methodCall': {
+      'methodName': 'one.user.update',
+      'params': {
+        'param': [
+          {
+            'value': `${username}:${token}`
+          },
+          {
+            'value': {
+              'int': `${userID}`
+            }
+          },
+          {
+            'value': `SSH_PUBLIC_KEY="${key}"`
+          },
+          {
+            'value': {
+              'int': `0`
+            }
+          }
+        ]
+      }
+    }
+  })
+
+  const config = {
+    method: 'post',
+    url: `${ONE_URI}`,
+    headers: { 'Content-Type': 'application/xml' },
+    data: data
+  }
+
+
+  try {
+    const r = await axios(config)
+    const result = await parser.parseStringPromise(r.data);
+
+    if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
+      return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
+    }
+
+    const bool = result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0]
+    return bool
+  } catch (error) {
+    console.error(error)
+    return { error: { msg: error } }
+  }
+}
+
+const createVm = async (username, token, templateId, vmName) => {
+  const data = builder.buildObject({
+    'methodCall': {
+      'methodName': 'one.template.instantiate',
+      'params': {
+        'param': [
+          {
+            'value': `${username}:${token}`
+          },
+          {
+            'value': {
+              'int': `${templateId}`
+            }
+          },
+          {
+            'value': `${vmName}`
+          },
+          {
+            'value': {
+              'boolean': `0`
+            }
+          },
+          {
+            'value': ''
+          },
+          {
+            'value': {
+              'boolean': `0`
+            }
+          },
+        ]
+      }
+    }
+  })
+
+  const config = {
+    method: 'post',
+    url: `${ONE_URI}`,
+    headers: { 'Content-Type': 'application/xml' },
+    data: data
+  }
+
+
+  try {
+    const r = await axios(config)
+    const result = await parser.parseStringPromise(r.data);
+
+    if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
+      console.log("ERROR CALLED")
+      return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
+    }
+
+    const vmId = result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].i4[0]
+    return vmId
+  } catch (error) {
+    console.error(error)
+    return { error: { msg: error } }
+  }
+}
+
+const getTemplateInfo = async (username, token) => {
+  const data = builder.buildObject({
+    'methodCall': {
+      'methodName': 'one.templatepool.info',
+      'params': {
+        'param': [
+          {
+            'value': `${username}:${token}`
+          },
+          {
+            'value': {
+              'int': `-1`
+            }
+          },
+          {
+            'value': {
+              'int': `-1`
+            }
+          },
+          {
+            'value': {
+              'int': `-1`
+            }
+          }
+        ]
+      }
+    }
+  })
+
+  const config = {
+    method: 'post',
+    url: `${ONE_URI}`,
+    headers: { 'Content-Type': 'application/xml' },
+    data: data
+  }
+
+
+  try {
+    const r = await axios(config)
+    const result = await parser.parseStringPromise(r.data);
+
+    if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
+      return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
+    }
+
+    const stringResult = await parser.parseStringPromise(result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0])
+    return stringResult;
+  } catch (error) {
+    console.error(error)
+    return { error: { msg: error } }
+  }
+}
+
+
+
 
 // getUserInfo()
 // PARAMS: username, token
@@ -312,5 +507,9 @@ exports.getGuildMembers = getGuildMembers;
 exports.checkIfGuildMember = checkIfGuildMember;
 exports.checkIfStaff = checkIfStaff;
 exports.checkForLoginToken = checkForLoginToken;
+exports.getSSHKey = getSSHKey;
+exports.updateSSHKey = updateSSHKey;
+exports.createVm = createVm;
+exports.getTemplateInfo = getTemplateInfo;
 exports.getUserInfo = getUserInfo;
 exports.getVmInfo = getVmInfo;

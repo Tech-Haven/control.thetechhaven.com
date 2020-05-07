@@ -5,7 +5,7 @@ const xml2js = require('xml2js');
 
 const labAuth = require('../../middleware/labAuth')
 const LabUser = require('../../models/LabUser');
-const { checkForLoginToken, getUserInfo, getVmInfo } = require('../../utils/utils')
+const { checkForLoginToken, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getVmInfo } = require('../../utils/utils')
 
 const router = express.Router();
 
@@ -127,6 +127,16 @@ router.post('/login', [
   res.status(200).send('Successfully logged in')
 })
 
+router.post('/user/ssh', labAuth, async (req, res) => {
+  const sshUpdated = await updateSSHKey(req.session.lab_username, req.session.lab_token, req.body.sshKey)
+
+  if (sshUpdated.error) {
+    return res.status(400).send(sshUpdated.error)
+  }
+
+  res.status(200).send('SSH Key Updated!')
+})
+
 router.get('/user/info', labAuth, async (req, res) => {
   const userObject = await getUserInfo(req.session.lab_username, req.session.lab_token)
 
@@ -137,6 +147,45 @@ router.get('/user/info', labAuth, async (req, res) => {
   res.status(200).send(userObject)
 })
 
+router.get('/template/info', labAuth, async (req, res) => {
+  const templateObject = await getTemplateInfo(req.session.lab_username, req.session.lab_token)
+
+  if (templateObject.error) {
+    return res.status(400).send(templateObject.error)
+  }
+
+  res.status(200).send(templateObject)
+})
+
+// POST /vm/create
+// DESRIPTION: Creates a new VM, and returns the info
+
+router.post('/vm/create', labAuth, async (req, res) => {
+
+  try {
+    const createdVmId = await createVm(req.session.lab_username, req.session.lab_token, req.body.templateId, req.body.vmName)
+
+    if (createdVmId.error) {
+      return res.status(400).send(createdVmId.error)
+    }
+
+    const vmObject = await getVmInfo(req.session.lab_username, req.session.lab_token, createdVmId);
+
+    if (vmObject.error) {
+      return res.status(400).send(vmObject.error)
+    }
+
+    return res.status(200).send(vmObject)
+  } catch (error) {
+    console.error(error)
+    res.status(500).send(`Error! Check server logs`)
+  }
+
+})
+
+
+// GET /vm/info/:vmid
+// DESRIPTION: Returns VM info for the id passed in through param.
 router.get('/vm/info/:vmid', [
   param('vmid', 'Please enter a VM ID').exists().isNumeric()
 ], labAuth, async (req, res) => {

@@ -1,9 +1,10 @@
-const { getVmInfo } = require('../utils/utils')
+const { createVm, getVmInfo, getSSHKey } = require('../utils/utils')
 const User = require('../models/User')
 
 module.exports = {
-  name: 'show-vm',
+  name: 'create-vm',
   description: 'Get info from a VM on the Lab server',
+  usage: `<templateID> <VM name>`,
   async execute(message, args) {
 
     if (isNaN(args[0])) {
@@ -15,11 +16,26 @@ module.exports = {
         console.error(err);
         return message.reply(`Error!: ${err}`)
       }
-      const vmObject = await getVmInfo(user.lab_user.username, user.lab_user.login_token, args[0])
+
+      // Check if user has a SSH key set before creating a VM
+      const sshKey = await getSSHKey(user.lab_user.username, user.lab_user.login_token)
+
+      if (!sshKey) {
+        return message.reply(`Please save a SSH key to your account before creating a VM.`)
+      }
+
+      const createdVmId = await createVm(user.lab_user.username, user.lab_user.login_token, args[0], args[1])
+
+      if (createdVmId.error) {
+        console.log(createdVmId.error)
+        return message.reply(`Error!: ${createdVmId.error.msg}`)
+      }
+
+      const vmObject = await getVmInfo(user.lab_user.username, user.lab_user.login_token, createdVmId);
 
       if (vmObject.error) {
-        console.log(vmObject)
-        return message.reply(`Error!: ${vmObject}`)
+        console.log(vmObject.error)
+        return message.reply(`Error!: ${vmObject.error.msg}`)
       }
 
       let status;
@@ -73,7 +89,7 @@ module.exports = {
           color = '4DBBD3'
           break;
       }
-
+      message.channel.send(`VM created!`)
       return message.channel.send({
         embed: {
           color: color,
