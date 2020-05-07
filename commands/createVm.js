@@ -17,11 +17,16 @@ module.exports = {
         return message.reply(`Error!: ${err}`)
       }
 
+      if (!user) {
+        return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
+      }
+
       // Check if user has a SSH key set before creating a VM
       const sshKey = await getSSHKey(user.lab_user.username, user.lab_user.login_token)
 
       if (!sshKey) {
-        return message.reply(`Please save a SSH key to your account before creating a VM.`)
+        return message.reply(`Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.
+        `)
       }
 
       const createdVmId = await createVm(user.lab_user.username, user.lab_user.login_token, args[0], args[1])

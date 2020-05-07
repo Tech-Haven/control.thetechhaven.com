@@ -15,6 +15,11 @@ module.exports = {
         console.error(err);
         return message.reply(`Error!: ${err}`)
       }
+
+      if (!user) {
+        return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
+      }
+
       const vmObject = await getVmInfo(user.lab_user.username, user.lab_user.login_token, args[0])
 
       if (vmObject.error) {

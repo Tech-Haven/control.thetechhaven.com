@@ -19,6 +19,10 @@ module.exports = {
         return message.reply(`Error!: ${err}`)
       }
 
+      if (!user) {
+        return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
+      }
+
       const sshUpdated = await updateSSHKey(user.lab_user.username, user.lab_user.login_token, key)
 
       if (sshUpdated.error) {
