@@ -13,6 +13,10 @@ const LabUserSchema = new Schema({
   login_token: {
     type: String,
     required: true
+  },
+  discord_user: {
+    type: String,
+    ref: 'user'
   }
 });
 

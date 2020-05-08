@@ -7,6 +7,8 @@ const xml2js = require('xml2js');
 const sshpk = require('sshpk')
 const parser = new xml2js.Parser();
 
+const LabUser = require('../models/LabUser')
+
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -190,13 +192,94 @@ const getStaffRoles = async () => {
   return staffRoles;
 };
 
+// labLogin()
+// PARAMS: username, password
+// RETURNS: userId, username, token
+const labLogin = async (username, password) => {
+  // Check if user already has a token 
+  let loginToken = await checkForLoginToken(username, password)
+
+  if (!loginToken) {
+    const data = builder.buildObject({
+      'methodCall': {
+        'methodName': 'one.user.login',
+        'params': {
+          'param': [
+            {
+              'value': `${username}:${password}`
+            },
+            {
+              'value': `${username}`
+            },
+            {
+              'value': ''
+            },
+            {
+              'value': {
+                'int': -1
+              }
+            },
+            {
+              'value': {
+                'int': -1
+              }
+            }
+          ]
+        }
+      }
+    })
+
+    const config = {
+      method: 'post',
+      url: `${ONE_URI}`,
+      headers: { 'Content-Type': 'application/xml' },
+      data: data
+    }
+
+    try {
+      const r = await axios(config)
+      const result = await parser.parseStringPromise(r.data);
+      loginToken = result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0];
+    } catch (error) {
+      console.error(error)
+      return { error }
+    }
+  }
+
+  if (loginToken.error) {
+    return { error: loginToken.error }
+  }
+
+  const userObject = await getUserInfo(username, loginToken)
+
+  if (userObject.error) {
+    return { error: userObject.error }
+  }
+
+  let query = {
+    userID: userObject.USER.ID[0],
+    username: userObject.USER.NAME[0],
+    login_token: loginToken
+  }
+
+  try {
+    const u = await LabUser.findOneAndUpdate({ userID: userObject.USER.ID[0] }, query, {
+      upsert: true,
+      new: true
+    });
+    return u;
+  } catch (error) {
+    return { error }
+  }
+}
+
 
 // checkForLoginToken()
 // PARAMS: username, password
 // RETURN: login token if there is one
 
 const checkForLoginToken = async (username, password) => {
-  const userInfo = await getUserInfo(username, password);
+  const userInfo = await getUserInfo(username, password)
 
   if (userInfo.error) {
     return { error: userInfo.error }
@@ -338,7 +421,6 @@ const createVm = async (username, token, templateId, vmName) => {
     const result = await parser.parseStringPromise(r.data);
 
     if (result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[0].boolean[0] == 0) {
-      console.log("ERROR CALLED")
       return { error: { msg: result.methodResponse.params[0].param[0].value[0].array[0].data[0].value[1].string[0] } }
     }
 
@@ -506,6 +588,7 @@ exports.getStaffRoles = getStaffRoles;
 exports.getGuildMembers = getGuildMembers;
 exports.checkIfGuildMember = checkIfGuildMember;
 exports.checkIfStaff = checkIfStaff;
+exports.labLogin = labLogin;
 exports.checkForLoginToken = checkForLoginToken;
 exports.getSSHKey = getSSHKey;
 exports.updateSSHKey = updateSSHKey;

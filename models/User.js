@@ -15,16 +15,10 @@ const UserSchema = new Schema({
     required: true
   },
   avatar: {
-    type: String,
-    required: true
+    type: String
   },
   refresh_hash: {
-    type: String,
-    required: true
-  },
-  lab_user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'labUser'
+    type: String
   }
 });
 

@@ -1,4 +1,4 @@
-const { checkForLoginToken } = require('../utils/utils')
+const { labLogin } = require('../utils/utils')
 const User = require('../models/User')
 const LabUser = require('../models/LabUser')
 
@@ -16,25 +16,48 @@ module.exports = {
     const username = args[0];
     const password = args[1];
 
-    // Verify lab user
-    const login_token = await checkForLoginToken(username, password)
+    try {
+      let discordUser = await User.findOne({ _id: message.author.id })
 
-    if (!login_token) {
-      return message.reply("Invalid user login!")
-    }
-
-    if (login_token.error) {
-      return message.reply(`Error!: ${login_token.error.msg}`)
-    }
-
-    let lab_user = await LabUser.findOne({ username, login_token })
-
-    User.findOneAndUpdate({ _id: message.author.id }, { lab_user }, { upsert: true, new: true }).populate('lab_user').exec((err, user) => {
-      if (err) {
-        console.error(err);
-        return message.reply(`Error!: ${err}`)
+      // save discord user to the database if they don't exist
+      if (!discordUser) {
+        newUser = new User({
+          _id: message.author.id,
+          username: message.author.username,
+          discriminator: message.author.discriminator
+        })
+        newUser = await newUser.save();
+        discordUser = newUser
       }
-      return message.reply(`Successfully logged in!`)
-    })
+
+      // Get back labUser from db
+      const labUser = await labLogin(username, password);
+
+      // Invalid creds
+      if (labUser.error) {
+        return message.reply(`Error! ${error}`)
+      }
+
+      // user already logged in before, or another user is trying to log in as them
+      if (labUser.discord_user) {
+        if (labUser.discord_user == message.author.id) {
+          return message.reply(`You already logged in!`)
+        } {
+          message.reply(`Lab account is already associated with another Discord account. You got caught ;)`)
+          // DM the actual owner that someone tried to login to their lab account
+          const owner = await message.client.users.fetch(labUser.discord_user)
+          return await owner.send(`${message.author} tried signing into your lab account. Reset your password!`)
+        }
+      }
+
+      // User hasn't associated theirDiscord account yet, so update their labUser to reference discordUser
+      const updatedLabUser = await LabUser.findOneAndUpdate({ userID: labUser.userID }, { discord_user: discordUser }, { upsert: true, new: true });
+
+      message.reply(`Success! Discord account is now associated with your lab account.`)
+
+    } catch (error) {
+      console.error(error)
+      message.reply(`Error! ${error}`)
+    }
   }
 }
