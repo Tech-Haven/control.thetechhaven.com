@@ -3,7 +3,7 @@ const User = require('../models/User')
 
 module.exports = {
   name: 'update-ssh',
-  description: 'Update your ssh key on the lab (required to create VMs)',
+  description: 'Update your ssh key on the lab. For more information on creating a ssh keypair, see the following forum post: https://forums.thetechhaven.com/t/creating-ssh-key-pair-for-lab/79',
   usage: `<ssh public key>`,
   async execute(message, args) {
 
