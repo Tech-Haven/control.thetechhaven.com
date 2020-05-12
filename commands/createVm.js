@@ -1,5 +1,5 @@
 const { createVm, getVmInfo, getSSHKey } = require('../utils/utils')
-const User = require('../models/User')
+const LabUser = require('../models/LabUser')
 
 module.exports = {
   name: 'create-vm',
@@ -8,35 +8,36 @@ module.exports = {
   async execute(message, args) {
 
     if (isNaN(args[0])) {
-      return message.reply("Please enter a vmid!")
+      return message.reply("Please enter a template ID!")
     }
 
-    User.findOne({ _id: message.author.id }).populate('lab_user').exec(async (err, user) => {
-      if (err) {
-        console.error(err);
-        return message.reply(`Error!: ${err}`)
-      }
+    if (!args[1]) {
+      return message.reply("Please enter a name for your VM")
+    }
 
-      if (!user) {
+    try {
+      const labUser = await LabUser.findOne({ discord_user: message.author.id })
+
+      if (!labUser) {
         return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
       }
 
       // Check if user has a SSH key set before creating a VM
-      const sshKey = await getSSHKey(user.lab_user.username, user.lab_user.login_token)
+      const sshKey = await getSSHKey(labUser.username, labUser.login_token)
 
       if (!sshKey) {
         return message.reply(`Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.
         `)
       }
 
-      const createdVmId = await createVm(user.lab_user.username, user.lab_user.login_token, args[0], args[1])
+      const createdVmId = await createVm(labUser.username, labUser.login_token, args[0], args[1])
 
       if (createdVmId.error) {
         console.log(createdVmId.error)
         return message.reply(`Error!: ${createdVmId.error.msg}`)
       }
 
-      const vmObject = await getVmInfo(user.lab_user.username, user.lab_user.login_token, createdVmId);
+      const vmObject = await getVmInfo(labUser.username, labUser.login_token, createdVmId);
 
       if (vmObject.error) {
         console.log(vmObject.error)
@@ -123,7 +124,7 @@ module.exports = {
             },
             {
               name: "Memory",
-              value: vmObject.VM.TEMPLATE[0].MEMORY[0],
+              value: `${vmObject.VM.TEMPLATE[0].MEMORY[0]} MB`,
               inline: true
             },
             {
@@ -134,7 +135,11 @@ module.exports = {
           ]
         }
       })
-    })
+
+    } catch (error) {
+      console.error(error)
+      message.reply(`Error! ${error}`)
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 const { getVmInfo } = require('../utils/utils')
-const User = require('../models/User')
+const LabUser = require('../models/LabUser')
 
 module.exports = {
   name: 'show-vm',
@@ -10,17 +10,14 @@ module.exports = {
       return message.reply("Please enter a vmid!")
     }
 
-    User.findOne({ _id: message.author.id }).populate('lab_user').exec(async (err, user) => {
-      if (err) {
-        console.error(err);
-        return message.reply(`Error!: ${err}`)
-      }
+    try {
+      const labUser = await LabUser.findOne({ discord_user: message.author.id });
 
-      if (!user) {
+      if (!labUser) {
         return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
       }
 
-      const vmObject = await getVmInfo(user.lab_user.username, user.lab_user.login_token, args[0])
+      const vmObject = await getVmInfo(labUser.username, labUser.login_token, args[0])
 
       if (vmObject.error) {
         console.log(vmObject)
@@ -107,7 +104,7 @@ module.exports = {
             },
             {
               name: "Memory",
-              value: vmObject.VM.TEMPLATE[0].MEMORY[0],
+              value: `${vmObject.VM.TEMPLATE[0].MEMORY[0]} MB`,
               inline: true
             },
             {
@@ -118,7 +115,11 @@ module.exports = {
           ]
         }
       })
-    })
+
+    } catch (error) {
+      console.error(error)
+      message.reply(`Error! ${error}`)
+    }
   }
 }
 

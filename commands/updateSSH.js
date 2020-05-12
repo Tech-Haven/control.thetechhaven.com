@@ -1,5 +1,5 @@
 const { updateSSHKey } = require('../utils/utils')
-const User = require('../models/User')
+const LabUser = require('../models/LabUser')
 
 module.exports = {
   name: 'update-ssh',
@@ -13,17 +13,14 @@ module.exports = {
       return message.reply("Please enter your ssh public key!")
     }
 
-    User.findOne({ _id: message.author.id }).populate('lab_user').exec(async (err, user) => {
-      if (err) {
-        console.error(err);
-        return message.reply(`Error!: ${err}`)
-      }
+    try {
+      const labUser = await LabUser.findOne({ discord_user: message.author.id })
 
-      if (!user) {
+      if (!labUser) {
         return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
       }
 
-      const sshUpdated = await updateSSHKey(user.lab_user.username, user.lab_user.login_token, key)
+      const sshUpdated = await updateSSHKey(labUser.username, labUser.login_token, key)
 
       if (sshUpdated.error) {
         console.log(sshUpdated)
@@ -31,7 +28,12 @@ module.exports = {
       }
 
       return message.reply(`SSH key updated!`)
-    })
+
+    } catch (error) {
+      console.error(error)
+      message.reply(`Error! ${error}`)
+    }
+
   }
 }
 
