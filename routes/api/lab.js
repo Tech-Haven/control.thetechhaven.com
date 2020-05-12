@@ -35,7 +35,9 @@ router.post('/login', [
       return res.status(400).send(userObject.error)
     }
 
-    return res.status(200).send(userObject)
+    const { userID, username } = userObject
+
+    return res.status(200).send({ userID, username })
 
   } catch (error) {
     console.error(error)
