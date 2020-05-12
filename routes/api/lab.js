@@ -35,7 +35,10 @@ router.post('/login', [
       return res.status(400).send(userObject.error)
     }
 
-    const { userID, username } = userObject
+    const { userID, username, login_token } = userObject
+
+    req.session.lab_username = username;
+    req.session.lab_token = login_token;
 
     return res.status(200).send({ userID, username })
 
