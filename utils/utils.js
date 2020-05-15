@@ -2,12 +2,17 @@ const fetch = require('node-fetch');
 const axios = require('axios')
 const FormData = require('form-data');
 const bcrypt = require('bcrypt');
-const User = require('../models/User');
 const xml2js = require('xml2js');
 const sshpk = require('sshpk')
+const fs = require('fs');
+const util = require('util')
+const NodeSSH = require('node-ssh')
+
+const ssh = new NodeSSH()
 const parser = new xml2js.Parser();
 
 const LabUser = require('../models/LabUser')
+const User = require('../models/User');
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
@@ -17,6 +22,8 @@ const redirect_uri = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
 const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
 const ONE_URI = 'http://10.10.1.3:2633/RPC2'
+const VPNSERVER = process.env.VPNSERVER;
+const SSHPRIVATEKEYPATH = process.env.SSHPRIVATEKEYPATH
 
 const builder = new xml2js.Builder({
   renderOpts: { 'pretty': false }
@@ -579,6 +586,38 @@ const getVmInfo = async (username, token, vmid) => {
   }
 }
 
+// NOTE: Hardcoded script name, and paths for VPN server. Make sure downloads folder exists within client public directory.
+
+const generateVPNFile = async (discordID) => {
+
+  const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
+
+  const access = util.promisify(fs.access);
+
+  try {
+    const err = await access(path, fs.constants.F_OK);
+
+    if (err) {
+      await ssh.connect({
+        host: VPNSERVER,
+        username: 'vpngen',
+        privateKey: SSHPRIVATEKEYPATH
+      })
+
+      await ssh.execCommand(`sudo ./generateVPNFile.sh ${discordID}`);
+
+      await ssh.getFile(`${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`, `/home/vpngen/${discordID}.ovpn`)
+
+      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
+    } else {
+      return { error: { msg: `File already exists. Check the website's dashboard for a download link.` } }
+    }
+  } catch (error) {
+    console.error(error)
+    return { error: { msg: error } }
+  }
+}
+
 exports.updateUser = updateUser;
 exports.getMe = getMe;
 exports.exchangeCode = exchangeCode;
@@ -596,3 +635,4 @@ exports.createVm = createVm;
 exports.getTemplateInfo = getTemplateInfo;
 exports.getUserInfo = getUserInfo;
 exports.getVmInfo = getVmInfo;
+exports.generateVPNFile = generateVPNFile
