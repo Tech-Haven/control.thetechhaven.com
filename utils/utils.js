@@ -610,7 +610,7 @@ const generateVPNFile = async (discordID) => {
 
       return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
     } else {
-      return { error: { msg: `File already exists. Check the website's dashboard for a download link.` } }
+      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn}` }
     }
   } catch (error) {
     console.error(error)
