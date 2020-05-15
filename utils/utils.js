@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const xml2js = require('xml2js');
 const sshpk = require('sshpk')
 const fs = require('fs');
+const fsp = fs.promises;
 const util = require('util')
 const NodeSSH = require('node-ssh')
 
@@ -587,34 +588,37 @@ const getVmInfo = async (username, token, vmid) => {
 }
 
 // NOTE: Hardcoded script name, and paths for VPN server. Make sure downloads folder exists within client public directory.
-
 const generateVPNFile = async (discordID) => {
 
   const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
 
-  const access = util.promisify(fs.access);
-
+  // Check if file exist locally. Catch will create and get the file.
   try {
-    const err = await access(path, fs.constants.F_OK);
+    await fsp.access(path, fs.constants.F_OK);
+    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
 
-    if (err) {
-      await ssh.connect({
-        host: VPNSERVER,
-        username: 'vpngen',
-        privateKey: SSHPRIVATEKEYPATH
-      })
-
-      await ssh.execCommand(`sudo ./generateVPNFile.sh ${discordID}`);
-
-      await ssh.getFile(`${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`, `/home/vpngen/${discordID}.ovpn`)
-
-      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
-    } else {
-      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
-    }
   } catch (error) {
-    console.error(error)
-    return { error: { msg: error } }
+    await ssh.connect({
+      host: VPNSERVER,
+      username: 'vpngen',
+      privateKey: SSHPRIVATEKEYPATH
+    })
+
+    await ssh.execCommand(`sudo ./generateVPNFile.sh ${discordID}`);
+
+    await ssh.getFile(`${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`, `/home/vpngen/${discordID}.ovpn`)
+
+    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
+  }
+}
+
+const getVPNFile = async (discordID) => {
+  const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
+  try {
+    await fsp.access(path, fs.constants.F_OK);
+    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
+  } catch (error) {
+    return { error: { msg: `File does not exist. Please generate a VPN file.` } }
   }
 }
 
@@ -636,3 +640,4 @@ exports.getTemplateInfo = getTemplateInfo;
 exports.getUserInfo = getUserInfo;
 exports.getVmInfo = getVmInfo;
 exports.generateVPNFile = generateVPNFile
+exports.getVPNFile = getVPNFile;

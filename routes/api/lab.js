@@ -6,7 +6,7 @@ const xml2js = require('xml2js');
 const auth = require('../../middleware/auth');
 const labAuth = require('../../middleware/labAuth')
 const LabUser = require('../../models/LabUser');
-const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getVmInfo, generateVPNFile } = require('../../utils/utils')
+const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getVmInfo, generateVPNFile, getVPNFile } = require('../../utils/utils')
 
 const router = express.Router();
 
@@ -128,6 +128,24 @@ router.get('/vm/info/:vmid', [
 
 router.get('/vpn', async (req, res) => {
   try {
+    const file = await getVPNFile("340606374348193793")
+
+    if (!file) {
+      return res.status(400).send(`Error! Check server log`)
+    }
+
+    if (file.error) {
+      return res.status(200).send(file)
+    }
+    return res.send(file)
+  } catch (error) {
+    console.error(error)
+    res.status(500).send(`Error! Check server logs`)
+  }
+})
+
+router.get('/vpn/create', async (req, res) => {
+  try {
     const status = await generateVPNFile("340606374348193793")
 
     if (!status) {
@@ -135,7 +153,7 @@ router.get('/vpn', async (req, res) => {
     }
 
     if (status.error) {
-      return res.status(400).send(status.error)
+      return res.status(200).send(status)
     }
     return res.send(status)
   } catch (error) {
