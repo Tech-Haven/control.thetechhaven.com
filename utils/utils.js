@@ -610,7 +610,7 @@ const generateVPNFile = async (discordID) => {
 
       return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
     } else {
-      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn}` }
+      return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
     }
   } catch (error) {
     console.error(error)
