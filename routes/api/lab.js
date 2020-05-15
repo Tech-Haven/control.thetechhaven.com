@@ -126,9 +126,9 @@ router.get('/vm/info/:vmid', [
   res.status(200).send(vmObject)
 })
 
-router.get('/vpn', async (req, res) => {
+router.get('/vpn', auth, async (req, res) => {
   try {
-    const file = await getVPNFile("340606374348193793")
+    const file = await getVPNFile(req.session.discordId)
 
     if (!file) {
       return res.status(400).send(`Error! Check server log`)
@@ -144,9 +144,9 @@ router.get('/vpn', async (req, res) => {
   }
 })
 
-router.get('/vpn/create', async (req, res) => {
+router.get('/vpn/create', auth, async (req, res) => {
   try {
-    const status = await generateVPNFile("340606374348193793")
+    const status = await generateVPNFile(req.session.discordId)
 
     if (!status) {
       return res.status(400).send(`Error! Check server log`)
