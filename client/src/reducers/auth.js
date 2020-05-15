@@ -1,4 +1,4 @@
-import { USER_LOADED, AUTH_ERROR, LOGOUT, LOGIN } from '../actions/types';
+import { USER_LOADED, AUTH_ERROR, LOGOUT, LOGIN, REQUESTVPN } from '../actions/types';
 
 const initialState = {
   isAuthenticated: null,
@@ -7,7 +7,7 @@ const initialState = {
   user: null
 };
 
-export default function(state = initialState, action) {
+export default function (state = initialState, action) {
   const { type, payload } = action;
   switch (type) {
     case USER_LOADED:
@@ -24,6 +24,11 @@ export default function(state = initialState, action) {
         loading: false,
         authURI: payload
       };
+    case REQUESTVPN:
+      return {
+        ...state,
+        user: { ...this.user, payload }
+      }
     case AUTH_ERROR:
     case LOGOUT:
       return {

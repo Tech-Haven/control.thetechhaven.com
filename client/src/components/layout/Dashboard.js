@@ -3,7 +3,9 @@ import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import Spinner from '../layout/Spinner';
 
-const Dashboard = ({ auth }) => {
+import { requestVPN } from '../../actions/auth'
+
+const Dashboard = ({ getRequestVPN, auth }) => {
   if (auth.loading) {
     return <Spinner />;
   }
@@ -16,6 +18,23 @@ const Dashboard = ({ auth }) => {
       Admin Panel
     </Link>
   );
+
+  const vpnDownloadLink = (
+    <a href={`${auth.user.download}`} className='btn'>
+      Download Lab OVPN
+    </a>
+  )
+
+  const handleRequestVpnClick = (e) => {
+    e.preventDefault();
+    getRequestVPN()
+  }
+
+  const requestVPNLink = (
+    <button onClick={handleRequestVpnClick} className='btn'>
+      Request OVPN File
+    </button>
+  )
 
   return (
     <Fragment>
@@ -34,6 +53,12 @@ const Dashboard = ({ auth }) => {
             </Link>
           </div>
         </div>
+        <div className='bg-dark p-2'>
+          <h1>Lab User</h1>
+          <div>
+            {auth.user.download ? vpnDownloadLink : requestVPNLink}
+          </div>
+        </div>
       </div>
     </Fragment>
   );
@@ -43,4 +68,8 @@ const mapStateToProps = state => ({
   auth: state.auth
 });
 
-export default connect(mapStateToProps)(Dashboard);
+const mapDispatchToProps = {
+  getRequestVPN: requestVPN
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);
