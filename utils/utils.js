@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const axios = require('axios')
+const Discord = require('discord.js')
 const FormData = require('form-data');
 const bcrypt = require('bcrypt');
 const xml2js = require('xml2js');
@@ -25,6 +26,8 @@ const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
 const ONE_URI = 'http://10.10.1.3:2633/RPC2'
 const VPNSERVER = process.env.VPNSERVER;
 const SSHPRIVATEKEYPATH = process.env.SSHPRIVATEKEYPATH
+const LOGWEBHOOKID = process.env.LOGWEBHOOKID
+const LOGWEBHOOKTOKEN = process.env.LOGWEBHOOKTOKEN
 
 const builder = new xml2js.Builder({
   renderOpts: { 'pretty': false }
@@ -608,6 +611,9 @@ const generateVPNFile = async (discordID) => {
 
     await ssh.getFile(`${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`, `/home/vpngen/${discordID}.ovpn`)
 
+    const webhookClient = new Discord.WebhookClient(LOGWEBHOOKID, LOGWEBHOOKTOKEN)
+    webhookClient.send(`${discordID} generated a new VPN file.`)
+
     return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
   }
 }
@@ -616,6 +622,8 @@ const getVPNFile = async (discordID) => {
   const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
   try {
     await fsp.access(path, fs.constants.F_OK);
+    const webhookClient = new Discord.WebhookClient(LOGWEBHOOKID, LOGWEBHOOKTOKEN)
+    webhookClient.send(`${discordID} downloaded their ovpn file.`)
     return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
   } catch (error) {
     return { error: { msg: `File does not exist. Please generate a VPN file.` } }
