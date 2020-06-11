@@ -35,9 +35,6 @@ const Navbar = ({ auth }) => {
         <a href='https://forums.thetechhaven.com' className='small'>
           Forums
         </a>
-        <a href='https://blog.thetechhaven.com' className='small'>
-          Blog
-        </a>
       </h1>
       {!auth.loading && (
         <Fragment>
