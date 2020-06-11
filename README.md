@@ -1,5 +1,7 @@
 # Tech Haven Website
 
+![push to web](https://github.com/Tech-Haven/thetechhaven.com/workflows/push%20to%20web/badge.svg)
+
 Repository for https://thetechhaven.com. Website is built using the MERN stack. Feel free to use as an example for your own website, or implimenting Discord Oauth.
 
 ### Enviromental Variables
