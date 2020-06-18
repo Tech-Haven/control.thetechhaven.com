@@ -8,7 +8,7 @@ import { login } from '../../actions/auth';
 const Login = ({ getLogin, isAuthenticated, loading, authURI }) => {
   useEffect(() => {
     getLogin();
-  }, []);
+  }, [getLogin]);
 
   if (loading) {
     return <Spinner />;
