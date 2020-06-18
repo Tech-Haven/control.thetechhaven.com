@@ -1,22 +1,11 @@
 const express = require('express')
 const { check, param, validationResult } = require('express-validator')
-const axios = require('axios')
-const xml2js = require('xml2js');
 
 const auth = require('../../middleware/auth');
 const labAuth = require('../../middleware/labAuth')
-const LabUser = require('../../models/LabUser');
-const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getVmInfo, generateVPNFile, getVPNFile } = require('../../utils/utils')
+const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getAllVmInfo, getVmInfo, generateVPNFile, getVPNFile } = require('../../utils/lab')
 
 const router = express.Router();
-
-const ONE_URI = 'http://10.10.1.3:2633/RPC2'
-
-const parser = new xml2js.Parser();
-
-const builder = new xml2js.Builder({
-  renderOpts: { 'pretty': false }
-})
 
 
 router.post('/login', [
@@ -105,6 +94,18 @@ router.post('/vm/create', labAuth, async (req, res) => {
 
 })
 
+// GET /vm/info/
+// DESRIPTION: Returns all VM info for user
+router.get('/vm/info', labAuth, async (req, res) => {
+
+  const vmObject = await getAllVmInfo(req.session.lab_username, req.session.lab_token)
+
+  if (vmObject.error) {
+    return res.status(400).send(vmObject.error)
+  }
+
+  res.status(200).send(vmObject)
+})
 
 // GET /vm/info/:vmid
 // DESRIPTION: Returns VM info for the id passed in through param.

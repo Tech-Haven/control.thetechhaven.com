@@ -1,4 +1,4 @@
-const { labLogin } = require('../utils/utils')
+const { labLogin } = require('../utils/lab')
 const User = require('../models/User')
 const LabUser = require('../models/LabUser')
 

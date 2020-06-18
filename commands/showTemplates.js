@@ -1,4 +1,4 @@
-const { getTemplateInfo } = require('../utils/utils')
+const { getTemplateInfo } = require('../utils/lab')
 const LabUser = require('../models/LabUser')
 
 module.exports = {

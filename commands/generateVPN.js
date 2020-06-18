@@ -1,4 +1,4 @@
-const { generateVPNFile } = require('../utils/utils')
+const { generateVPNFile } = require('../utils/lab')
 
 module.exports = {
   name: 'generate-vpn',

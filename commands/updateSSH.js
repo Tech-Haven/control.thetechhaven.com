@@ -1,4 +1,4 @@
-const { updateSSHKey } = require('../utils/utils')
+const { updateSSHKey } = require('../utils/lab')
 const LabUser = require('../models/LabUser')
 
 module.exports = {

@@ -1,4 +1,4 @@
-const { createVm, getVmInfo, getSSHKey } = require('../utils/utils')
+const { createVm, getVmInfo, getSSHKey } = require('../utils/lab')
 const LabUser = require('../models/LabUser')
 
 module.exports = {

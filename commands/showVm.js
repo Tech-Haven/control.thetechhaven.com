@@ -1,4 +1,4 @@
-const { getVmInfo } = require('../utils/utils')
+const { getVmInfo } = require('../utils/lab')
 const LabUser = require('../models/LabUser')
 
 module.exports = {
@@ -80,7 +80,6 @@ module.exports = {
         embed: {
           color: color,
           title: `${vmObject.VM.ID[0]} - ${vmObject.VM.NAME[0]}`,
-          description: `VM running on Tech Haven lab`,
           fields: [
             {
               name: "Name",
