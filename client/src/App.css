@@ -342,7 +342,7 @@ button {
 /* Landing Page */
 .landing {
   position: relative;
-  background: url('./img/techhavenfox.png') no-repeat center center/cover;
+  background: url('./img/tech_haven_icon.png') no-repeat center center/cover;
   height: 100vh;
 }
 
