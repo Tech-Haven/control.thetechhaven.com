@@ -1,9 +1,10 @@
-const { getStaffRoles } = require('../utils/utils')
+const { checkIfStaff } = require('../utils/utils')
 
 module.exports = {
   name: 'membercount',
   description: 'Turn member count channel on or off',
   args: true,
+  staffOnly: true,
   usage: `<show|hide>`,
   async update(guild) {
     const memberCountChannel = await getMemberCountChannel(guild)
@@ -37,9 +38,12 @@ module.exports = {
 
     // Show or hide the member count
     const showMemberCountChannel = async visible => {
-      const staffRoles = await getStaffRoles()
-      console.log(staffRoles)
-      if (!message.member.roles.cache.some(r => staffRoles.some(s => s.name === r.name))) return message.reply("Sorry, you don't have permissions to use this command!")
+      const isStaff = checkIfStaff(message.author.id)
+
+      if (!isStaff) {
+        return message.reply("Sorry, you don't have permissions to use this command!")
+      }
+
       let memberCountChannel = await getMemberCountChannel(message.guild)
       if (visible) {
         if (memberCountChannel) {

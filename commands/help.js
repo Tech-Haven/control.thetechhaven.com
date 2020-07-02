@@ -1,3 +1,4 @@
+const { checkIfStaff } = require('../utils/utils')
 const PREFIX = process.env.PREFIX;
 
 module.exports = {
@@ -8,17 +9,26 @@ module.exports = {
     const { commands } = message.client;
 
     if (!args.length) {
+      const isStaff = await checkIfStaff(message.author.id)
+
       data.push(`Here's a list of all my commands:`);
-      data.push(commands.map(command => command.name).join(', '));
+
+      const allowedCommands = commands.map(command => {
+        if (command.staffOnly && !isStaff) {
+          return
+        }
+        return command.name
+      }).filter(x => x !== undefined)
+      data.push(allowedCommands.join(', '));
       data.push(`\nYou can send \`${PREFIX}help [command name]\` to get info on a specific command.`);
 
       try {
         await message.author.send(data, { split: true })
         if (message.channel.type === 'dm') return;
-        message.reply(`I've sent you a DM with all my commands!`)
+        return message.reply(`I've sent you a DM with all my commands!`)
       } catch (e) {
         console.error(`Could not send help DM to ${message.author.tag}.\n`, e)
-        message.reply(`It seems I can't DM you! Do you have DMs disabled?`);
+        return message.reply(`It seems I can't DM you! Do you have DMs disabled?`);
       }
     }
 
