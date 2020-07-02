@@ -1,6 +1,7 @@
 const fs = require('fs')
 const Discord = require('discord.js');
 const { checkIfStaff } = require('./utils/utils')
+const TicketMessage = require('./models/TicketMessage');
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
@@ -17,16 +18,35 @@ const PREFIX = process.env.PREFIX;
 const startBot = async () => {
   try {
     // Called when the server starts
-    client.on('ready', () => {
-      console.log(`Logged in as ${client.user.tag}!`);
-    });
+    client.on('ready', async () => {
+      try {
+        const ticketMessageDb = await TicketMessage.findOne()
+        const ticketMessageChannel = await client.channels.fetch(ticketMessageDb.channelID)
+        await ticketMessageChannel.messages.fetch(ticketMessageDb._id)
+      } catch (error) {
+        console.log("Error!", error)
+      }
 
-    client.on('guildMemberAdd', member => {
-      client.commands.get('membercount').update(member.guild)
+      console.log(`Logged in as ${client.user.tag}!`)
     })
 
-    client.on('guildMemberRemove', member => {
-      client.commands.get('membercount').update(member.guild)
+    // Called when someone joins the guild
+    client.on('guildMemberAdd', member => client.commands.get('membercount').update(member.guild))
+
+    // Called when someone leaves the guild
+    client.on('guildMemberRemove', member => client.commands.get('membercount').update(member.guild))
+
+    client.on('messageReactionAdd', async (messageReaction, user) => {
+      if (!user.bot) {
+        try {
+          const ticketMessage = await TicketMessage.findOne({ _id: messageReaction.message.id })
+          if (ticketMessage) {
+            client.commands.get('ticket').sendToDm(messageReaction, user)
+          }
+        } catch (error) {
+          return
+        }
+      }
     })
 
     // Called whenever a message is created
