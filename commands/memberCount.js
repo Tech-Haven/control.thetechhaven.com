@@ -1,5 +1,3 @@
-const { checkIfStaff } = require('../utils/utils')
-
 module.exports = {
   name: 'membercount',
   description: 'Turn member count channel on or off',
@@ -38,12 +36,6 @@ module.exports = {
 
     // Show or hide the member count
     const showMemberCountChannel = async visible => {
-      const isStaff = checkIfStaff(message.author.id)
-
-      if (!isStaff) {
-        return message.reply("Sorry, you don't have permissions to use this command!")
-      }
-
       let memberCountChannel = await getMemberCountChannel(message.guild)
       if (visible) {
         if (memberCountChannel) {

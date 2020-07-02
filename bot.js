@@ -1,5 +1,6 @@
 const fs = require('fs')
 const Discord = require('discord.js');
+const { checkIfStaff } = require('./utils/utils')
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
@@ -46,6 +47,13 @@ const startBot = async () => {
 
       if (command.guildOnly && message.channel.type !== 'text') {
         return message.reply(`I can't execute that command inside DMs!`)
+      }
+
+      if (command.staffOnly) {
+        const isStaff = checkIfStaff(message.author.id)
+        if (!isStaff) {
+          return message.reply(`You don't have permission to use this command!`)
+        }
       }
 
       if (command.args && !args.length) {
