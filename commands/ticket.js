@@ -117,6 +117,9 @@ const waitForCategory = user => {
         case 'electronics':
           nodeID = 14;
           break;
+        case 'servers':
+          nodeID = 15;
+          break;
         default:
           user.send(`Since that's not a category, we'll just go with general then...`)
           nodeID = 37;
