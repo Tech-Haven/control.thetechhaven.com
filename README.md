@@ -1,8 +1,8 @@
 # Tech Haven Website
 
-![push to web](https://github.com/Tech-Haven/thetechhaven.com/workflows/push%20to%20web/badge.svg)
+![push to web](https://github.com/Tech-Haven/control.thetechhaven.com.com/workflows/push%20to%20web/badge.svg)
 
-Repository for https://thetechhaven.com. Website is built using the MERN stack. Feel free to use as an example for your own website, or implimenting Discord Oauth.
+Repository for https://control.thetechhaven.com.com. Website is built using the MERN stack. Feel free to use as an example for your own website, or implimenting Discord Oauth.
 
 ### Enviromental Variables
 
@@ -16,8 +16,8 @@ Repository for https://thetechhaven.com. Website is built using the MERN stack. 
   | PORT           | 5000                                          |
   | SESSION_SECRET | [some random string]                          |
   | MONGO_URI      | mongodb://localhost:27017/example             |
-  | REDIRECT_URI   | http://thetechhaven.com/api/discord/oauth     |
-  | DASHBOARD_URI  | http://thetechhaven.com/dashboard             |
+  | REDIRECT_URI   | http://control.thetechhaven.com.com/api/discord/oauth     |
+  | DASHBOARD_URI  | http://control.thetechhaven.com.com/dashboard             |
   | SCOPE          | 'identify'                                    |
   | CLIENT_ID      | [CLIENT_ID from Discord Developer Portal]     |
   | CLIENT_SECRET  | [CLIENT_SECRET from Discord Developer Portal] |
@@ -27,7 +27,7 @@ Repository for https://thetechhaven.com. Website is built using the MERN stack. 
 Install the dependencies and devDependencies and start the server.
 
 ```sh
-$ cd thetechhaven.com
+$ cd control.thetechhaven.com.com
 $ npm install -d
 $ node app
 ```

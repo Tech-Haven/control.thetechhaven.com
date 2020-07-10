@@ -1,5 +1,5 @@
 {
-  "name": "thetechhaven.com",
+  "name": "control.thetechhaven.com.com",
   "version": "1.0.0",
   "description": "Tech Haven API w/ Discord oauth",
   "main": "server.js",
