@@ -11,7 +11,6 @@ const parser = new xml2js.Parser();
 const LabUser = require('../models/LabUser')
 
 const ONE_URI = 'http://10.10.1.3:2633/RPC2'
-const VPNSERVER = process.env.VPNSERVER;
 const SSHPRIVATEKEYPATH = process.env.SSHPRIVATEKEYPATH
 const LOGWEBHOOKID = process.env.LOGWEBHOOKID
 const LOGWEBHOOKTOKEN = process.env.LOGWEBHOOKTOKEN
@@ -401,46 +400,6 @@ const getVmInfo = async (username, token, vmid) => {
   return stringResult;
 }
 
-// NOTE: Hardcoded script name, and paths for VPN server. Make sure downloads folder exists within client public directory.
-const generateVPNFile = async (discordID) => {
-
-  const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
-
-  // Check if file exist locally. Catch will create and get the file.
-  try {
-    await fsp.access(path, fs.constants.F_OK);
-    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
-
-  } catch (error) {
-    await ssh.connect({
-      host: VPNSERVER,
-      username: 'vpngen',
-      privateKey: SSHPRIVATEKEYPATH
-    })
-
-    await ssh.execCommand(`sudo ./generateVPNFile.sh ${discordID}`);
-
-    await ssh.getFile(`${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`, `/home/vpngen/${discordID}.ovpn`)
-
-    const webhookClient = new Discord.WebhookClient(LOGWEBHOOKID, LOGWEBHOOKTOKEN)
-    webhookClient.send(`${discordID} generated a new VPN file.`)
-
-    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
-  }
-}
-
-const getVPNFile = async (discordID) => {
-  const path = `${process.env.VPNDOWNLOADPATH}/${discordID}.ovpn`
-  try {
-    await fsp.access(path, fs.constants.F_OK);
-    const webhookClient = new Discord.WebhookClient(LOGWEBHOOKID, LOGWEBHOOKTOKEN)
-    webhookClient.send(`${discordID} downloaded their ovpn file.`)
-    return { download: `${process.env.WEBSITEURI}/downloads/${discordID}.ovpn` }
-  } catch (error) {
-    return { error: { msg: `File does not exist. Please generate a VPN file.` } }
-  }
-}
-
 exports.labLogin = labLogin;
 exports.checkForLoginToken = checkForLoginToken;
 exports.getSSHKey = getSSHKey;
@@ -450,5 +409,3 @@ exports.getTemplateInfo = getTemplateInfo;
 exports.getUserInfo = getUserInfo;
 exports.getAllVmInfo = getAllVmInfo;
 exports.getVmInfo = getVmInfo;
-exports.generateVPNFile = generateVPNFile
-exports.getVPNFile = getVPNFile;

@@ -1,9 +1,8 @@
 const express = require('express')
 const { check, param, validationResult } = require('express-validator')
 
-const auth = require('../../middleware/auth');
 const labAuth = require('../../middleware/labAuth')
-const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getAllVmInfo, getVmInfo, generateVPNFile, getVPNFile } = require('../../utils/lab')
+const { labLogin, updateSSHKey, createVm, getTemplateInfo, getUserInfo, getAllVmInfo, getVmInfo } = require('../../utils/lab')
 
 const router = express.Router();
 
@@ -125,42 +124,6 @@ router.get('/vm/info/:vmid', [
   }
 
   res.status(200).send(vmObject)
-})
-
-router.get('/vpn', auth, async (req, res) => {
-  try {
-    const file = await getVPNFile(req.session.discordId)
-
-    if (!file) {
-      return res.status(400).send(`Error! Check server log`)
-    }
-
-    if (file.error) {
-      return res.status(200).send(file)
-    }
-    return res.send(file)
-  } catch (error) {
-    console.error(error)
-    res.status(500).send(`Error! Check server logs`)
-  }
-})
-
-router.get('/vpn/create', auth, async (req, res) => {
-  try {
-    const status = await generateVPNFile(req.session.discordId)
-
-    if (!status) {
-      return res.status(400).send(`Error! Check server log`)
-    }
-
-    if (status.error) {
-      return res.status(200).send(status)
-    }
-    return res.send(status)
-  } catch (error) {
-    console.error(error)
-    res.status(500).send(`Error! Check server logs`)
-  }
 })
 
 module.exports = router;
