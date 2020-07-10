@@ -86,12 +86,16 @@ const getMe = async access_token => {
       Authorization: `Bearer ${access_token}`
     }
   });
+  const response = await r.json();
   if (r.status === 401) {
     return { error: { status: 401, msg: '401: Unauthorized' } };
   }
-  return r.json();
+  return response
 };
 
+// getGuildMembers()
+// PARAMS: NONE
+// RETURN: All guild members in given guild ID
 const getGuildMembers = async () => {
   const r = await fetch(
     `https://discordapp.com/api/guilds/${GUILD_ID}/members`,
@@ -174,7 +178,7 @@ const getStaffRoles = async () => {
     }
   });
   const guildRoles = await r.json();
-  var staffRoleFilter = ['Staff', 'Root', 'Server Admin'];
+  let staffRoleFilter = ['Staff', 'Root', 'Server Admin'];
   const staffRoles = guildRoles.filter(role => {
     return staffRoleFilter.includes(role.name);
   });
