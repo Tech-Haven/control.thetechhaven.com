@@ -15,12 +15,10 @@ const UserSchema = new Schema({
     required: true
   },
   avatar: {
-    type: String,
-    required: true
+    type: String
   },
   refresh_hash: {
-    type: String,
-    required: true
+    type: String
   }
 });
 

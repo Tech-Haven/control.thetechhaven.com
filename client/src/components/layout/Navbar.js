@@ -32,7 +32,7 @@ const Navbar = ({ auth }) => {
     <nav className='navbar bg-dark'>
       <h1>
         <Link to='/'>Tech Haven</Link>
-        <a href='https://control.thetechhaven.com.com' className='small'>
+        <a href='https://thetechhaven.com' className='small'>
           Forums
         </a>
       </h1>

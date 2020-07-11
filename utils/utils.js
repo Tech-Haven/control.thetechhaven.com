@@ -1,6 +1,8 @@
 const fetch = require('node-fetch');
+const Discord = require('discord.js')
 const FormData = require('form-data');
 const bcrypt = require('bcrypt');
+
 const User = require('../models/User');
 
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -10,6 +12,7 @@ const scope = process.env.SCOPE;
 const redirect_uri = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
 const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
+
 
 // updateUser()
 // PARAMS: access_token, refresh_token

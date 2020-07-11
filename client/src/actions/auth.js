@@ -3,11 +3,12 @@ import { USER_LOADED, AUTH_ERROR, LOGOUT, LOGIN } from './types';
 
 export const loadUser = () => async dispatch => {
   try {
-    const res = await axios.get('api/discord/users/@me');
+    const discordUser = await axios.get('api/discord/users/@me');
+    let data = discordUser.data;
 
     dispatch({
       type: USER_LOADED,
-      payload: res.data
+      payload: data
     });
   } catch (err) {
     console.log(err);
