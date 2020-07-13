@@ -1,21 +1,17 @@
 const { getVmInfo } = require('../utils/lab')
-const LabUser = require('../models/LabUser')
 
 module.exports = {
   name: 'show-vm',
   description: 'Get info from a VM on the Lab server',
-  async execute(message, args) {
+  labAuth: true,
+  async execute(message, args, props) {
 
     if (isNaN(args[0])) {
       return message.reply("Please enter a vmid!")
     }
 
     try {
-      const labUser = await LabUser.findOne({ discord_user: message.author.id });
-
-      if (!labUser) {
-        return message.reply(`Please login to the lab. Use \`help lab-login\` command for help.`)
-      }
+      const { labUser } = props;
 
       const vmObject = await getVmInfo(labUser.username, labUser.login_token, args[0])
 

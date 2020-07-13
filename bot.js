@@ -2,6 +2,7 @@ const fs = require('fs')
 const Discord = require('discord.js');
 const { checkIfStaff } = require('./utils/utils')
 const TicketMessage = require('./models/TicketMessage');
+const LabUser = require('./models/LabUser')
 
 const client = new Discord.Client();
 client.commands = new Discord.Collection();
@@ -50,7 +51,7 @@ const startBot = async () => {
     })
 
     // Called whenever a message is created
-    client.on(`message`, message => {
+    client.on(`message`, async message => {
       // Ignore other bots
       if (message.author.bot) return;
 
@@ -60,6 +61,7 @@ const startBot = async () => {
       // Splice "command" away from "arguments"
       const args = message.content.slice(PREFIX.length).trim().split(/ +/g);
       const commandName = args.shift().toLowerCase();
+      let props = {};
 
       if (!client.commands.has(commandName)) return
 
@@ -76,6 +78,21 @@ const startBot = async () => {
         }
       }
 
+      if (command.labAuth) {
+        try {
+          const labUser = await LabUser.findOne({ discord_user: message.author.id })
+
+          if (!labUser) {
+            return message.reply(`Please login to the lab to use this command. Use \`help lab-login\` command for help.`)
+          }
+
+          props.labUser = labUser;
+        } catch (error) {
+          return message.reply(`Please login to the lab to use this command. Use \`help lab-login\` command for help.`)
+        }
+
+      }
+
       if (command.args && !args.length) {
         let reply = `${message.author}, you didn't provide any arguments!`
 
@@ -87,7 +104,7 @@ const startBot = async () => {
       }
 
       try {
-        command.execute(message, args);
+        command.execute(message, args, props);
       } catch (e) {
         console.log(e)
         message.reply('Oops! There was an error trying to run that command!')
