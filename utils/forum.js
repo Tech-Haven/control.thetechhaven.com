@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
-const URI = `https://control.thetechhaven.com/api`
+const URI = `https://thetechhaven.com/api`
 const FORUMS_TOKEN = process.env.FORUMS_TOKEN
 
 
