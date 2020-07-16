@@ -1,6 +1,7 @@
 const fs = require('fs')
 const Discord = require('discord.js');
 const { checkIfStaff } = require('./utils/utils')
+const { getSSHKey } = require('./utils/lab')
 const TicketMessage = require('./models/TicketMessage');
 const LabUser = require('./models/LabUser')
 
@@ -90,7 +91,24 @@ const startBot = async () => {
         } catch (error) {
           return message.reply(`Please login to the lab to use this command. Use \`help lab-login\` command for help.`)
         }
+      }
 
+      if (command.sshKeyRequired) {
+        // Check if user has a SSH key set before creating a VM
+        try {
+          const sshKey = await getSSHKey(labUser.username, labUser.login_token)
+
+          if (!sshKey) {
+            return message.reply(`Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.`)
+          }
+
+          if (sshKey.error) {
+            return message.reply(`${sshKey.error} Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.`)
+          }
+        } catch (error) {
+          console.error(error)
+          return message.reply(`${error} Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.`)
+        }
       }
 
       if (command.args && !args.length) {

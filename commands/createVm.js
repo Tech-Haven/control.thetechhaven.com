@@ -1,26 +1,15 @@
-const { createVm, getVmInfo, getSSHKey } = require('../utils/lab')
+const { createVm, getVmInfo } = require('../utils/lab')
 
 module.exports = {
   name: 'create-vm',
   description: 'Get info from a VM on the Lab server',
   usage: `<templateID> <VM name>`,
   labAuth: true,
+  sshKeyRequired: true,
   async execute(message, args, props) {
 
     try {
       const { labUser } = props;
-
-      // Check if user has a SSH key set before creating a VM
-      const sshKey = await getSSHKey(labUser.username, labUser.login_token)
-
-      if (!sshKey) {
-        return message.reply(`Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.
-        `)
-      }
-
-      if (sshKey.error) {
-        return message.reply(`${sshKey.error} Please save a SSH key to your account before creating a VM. Use the \`help update-ssh\` command for help.`)
-      }
 
       if (isNaN(args[0])) {
         return message.reply("Please enter a template ID!")
