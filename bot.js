@@ -96,6 +96,7 @@ const startBot = async () => {
       if (command.sshKeyRequired) {
         // Check if user has a SSH key set before creating a VM
         try {
+          const labUser = await LabUser.findOne({ discord_user: message.author.id })
           const sshKey = await getSSHKey(labUser.username, labUser.login_token)
 
           if (!sshKey) {
