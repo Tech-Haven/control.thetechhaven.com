@@ -17,7 +17,7 @@ module.exports = {
       await user.send(`Thank you for using the Tech Haven ticket system! Keep in mind, I will stop listening for a response after ${timeoutTime / 60000} minutes of inactivity.`)
       await messageReaction.users.remove(user)
     } catch (error) {
-      console.error(`Could not send help DM to ${user.username}.\n`, error)
+      return console.error(`Could not send help DM to ${user.username}.\n`, error)
     }
     waitForCategory(user)
   },

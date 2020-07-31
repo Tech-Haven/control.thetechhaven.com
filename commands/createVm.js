@@ -1,4 +1,6 @@
-const { createVm, getVmInfo } = require('../utils/lab')
+const { createVm, getVmInfo, getTemplateInfo, getTemplateFields } = require('../utils/lab')
+
+const timeoutTime = 30000
 
 module.exports = {
   name: 'create-vm',
@@ -11,15 +13,55 @@ module.exports = {
     try {
       const { labUser } = props;
 
-      if (isNaN(args[0])) {
-        return message.reply("Please enter a template ID!")
+      const templatesObject = await getTemplateInfo(labUser.username, labUser.login_token)
+
+      if (templatesObject.error) {
+        console.error(templatesObject.error)
+        return message.reply(`Error! ${templatesObject.error}`)
       }
 
-      if (!args[1]) {
-        return message.reply("Please enter a name for your VM")
+      const fields = getTemplateFields(templatesObject)
+      const { idField } = fields
+      let templateId
+      let vmName
+
+      if (!args[0] && !args[1]) {
+        try {
+          templateId = await waitForTemplate(message, message.author, fields)
+
+          if (templateId.error) {
+            return
+          }
+
+          vmName = await waitForName(message, message.author)
+
+          if (vmName.error) {
+            return
+          }
+        } catch (error) {
+          console.error(error)
+          return message.reply(`Error! ${error}`)
+        }
+      } else {
+        // They didn't type a number or valid template ID
+        if (!idField.trim().split("\n").includes(args[0])) {
+          return message.reply("Please type a valid template ID")
+        }
+
+        // They typed a template ID, but no name
+        if (args[0] && !args[1]) {
+          args[1] = `${message.author.username} VM`
+        }
+
+        templateId = args[0]
+        vmName = args[1]
       }
 
-      const createdVmId = await createVm(labUser.username, labUser.login_token, args[0], args[1])
+      if (templateId.error || vmName.error) {
+        return
+      }
+
+      const createdVmId = await createVm(labUser.username, labUser.login_token, templateId, vmName)
 
       if (createdVmId.error) {
         console.log(createdVmId.error)
@@ -129,6 +171,73 @@ module.exports = {
       console.error(error)
       message.reply(`Error! ${error}`)
     }
+  }
+}
+
+// Ask for template ID, wait, and return the user's response
+const waitForTemplate = async (message, user, fields) => {
+  const askForTemplateMessage = await message.reply("What template do you want to spawn? (type the ID)")
+  const { idField, nameField } = fields
+  let chooseTemplateEmbedMessage
+  try {
+    chooseTemplateEmbedMessage = await message.channel.send({
+      embed: {
+        title: `VM Templates`,
+        description: `VM Templates to spawn`,
+        fields: [
+          {
+            name: "ID",
+            value: `${idField}`,
+            inline: true
+          },
+          {
+            name: "Distro",
+            value: `${nameField}`,
+            inline: true
+          }
+        ]
+      }
+    })
+  } catch (err) {
+    console.error(error)
+    return message.reply(`Error! ${error}`)
+  }
+  const filter = m => {
+    return m.author.id === user.id && idField.trim().split("\n").includes(m.content)
+  }
+  try {
+    const reply = await message.channel.awaitMessages(filter, { max: 1, time: timeoutTime, errors: ['time'] })
+
+    const templateReply = reply.first().content.trim().toLowerCase()
+    await askForTemplateMessage.delete()
+    await chooseTemplateEmbedMessage.delete()
+    return templateReply;
+  } catch (error) {
+    await askForTemplateMessage.delete()
+    await chooseTemplateEmbedMessage.delete()
+    message.reply(`Command timed out. Goodbye!`)
+    return { error }
+  }
+}
+
+const waitForName = async (message, user) => {
+  const askForNameMessage = await message.reply("What do you wanna call your VM?")
+
+  const filter = m => m.author.id === user.id
+
+  try {
+    const reply = await message.channel.awaitMessages(filter, { max: 1, time: timeoutTime, errors: ['time'] })
+
+    const nameReply = reply.first().content.trim().toLowerCase()
+    if (nameReply === '') {
+      nameReply = `${message.author.username}'s VM`
+    }
+    await askForNameMessage.delete()
+    return nameReply;
+  } catch (error) {
+    message.reply(`Command timed out. Goodbye!`)
+    await askForNameMessage.delete()
+    return { error }
   }
 }
 

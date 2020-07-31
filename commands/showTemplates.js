@@ -1,9 +1,9 @@
-const { getTemplateInfo } = require('../utils/lab')
+const { getTemplateInfo, getTemplateFields } = require('../utils/lab')
 
 module.exports = {
   name: 'show-templates',
   description: 'Show different templates available to spawn.',
-  labAuth: true.valueOf,
+  labAuth: true,
   async execute(message, args, props) {
 
     try {
@@ -16,26 +16,8 @@ module.exports = {
         return message.reply(`Error! ${templatesObject.error}`)
       }
 
-      let idField = ''
-      let nameField = ''
-      const templates = templatesObject.VMTEMPLATE_POOL.VMTEMPLATE;
-
-      const compare = (a, b) => {
-        let comparison = 0;
-        if (a.ID[0] > b.ID[0]) {
-          comparison = 1;
-        } else if (a.ID[0] < b.ID[0]) {
-          comparison = -1;
-        }
-        return comparison
-      }
-
-      templates.sort(compare)
-
-      for (let i = 0; i < templates.length; i++) {
-        idField += `${templates[i].ID[0]}\n`
-        nameField += `${templates[i].NAME[0]}\n`
-      }
+      const fields = getTemplateFields(templatesObject)
+      const { idField, nameField } = fields
 
       return message.channel.send({
         embed: {
@@ -55,7 +37,6 @@ module.exports = {
           ]
         }
       })
-
     } catch (error) {
       console.error(error)
       message.reply(`Error! ${error}`)
@@ -63,4 +44,3 @@ module.exports = {
 
   }
 }
-

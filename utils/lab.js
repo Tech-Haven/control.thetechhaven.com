@@ -397,6 +397,30 @@ const getVmInfo = async (username, token, vmid) => {
   return stringResult;
 }
 
+const getTemplateFields = (templatesObject) => {
+  let idField = ''
+  let nameField = ''
+  const templates = templatesObject.VMTEMPLATE_POOL.VMTEMPLATE;
+
+  const compare = (a, b) => {
+    let comparison = 0;
+    if (a.ID[0] > b.ID[0]) {
+      comparison = 1;
+    } else if (a.ID[0] < b.ID[0]) {
+      comparison = -1;
+    }
+    return comparison
+  }
+
+  templates.sort(compare)
+
+  for (let i = 0; i < templates.length; i++) {
+    idField += `${templates[i].ID[0]}\n`
+    nameField += `${templates[i].NAME[0]}\n`
+  }
+  return { idField, nameField }
+}
+
 exports.labLogin = labLogin;
 exports.checkForLoginToken = checkForLoginToken;
 exports.getSSHKey = getSSHKey;
@@ -406,3 +430,4 @@ exports.getTemplateInfo = getTemplateInfo;
 exports.getUserInfo = getUserInfo;
 exports.getAllVmInfo = getAllVmInfo;
 exports.getVmInfo = getVmInfo;
+exports.getTemplateFields = getTemplateFields
