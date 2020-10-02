@@ -6,7 +6,7 @@ const parser = new xml2js.Parser();
 
 const LabUser = require('../models/LabUser')
 
-const ONE_URI = 'http://lab.thetechhaven.com:2633/RPC2'
+const ONE_URI = process.env.ONE_URI
 
 const builder = new xml2js.Builder({
   renderOpts: { 'pretty': false }

@@ -21,7 +21,7 @@ const startBot = async () => {
   try {
     // Called when the server starts
     client.on('ready', async () => {
-      await client.user.setPresence({ activity: { name: 'fox! help' } })
+      await client.user.setPresence({ activity: { name: `${PREFIX} help` } })
       try {
         const ticketMessageDb = await TicketMessage.findOne()
         const ticketMessageChannel = await client.channels.fetch(ticketMessageDb.channelID)
