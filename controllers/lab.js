@@ -1,6 +1,14 @@
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
-const { labLogin } = require('../utils/lab');
+const {
+  labLogin,
+  updateSSHKey,
+  createVm,
+  getTemplateInfo,
+  getUserInfo,
+  getAllVmInfo,
+  getVmInfo,
+} = require('../utils/lab');
 
 // @desc    Authenticate to THLAB
 // @route   POST /api/v1/lab/login
