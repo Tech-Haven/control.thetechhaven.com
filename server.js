@@ -34,6 +34,8 @@ if (app.get('env') === 'production') {
   sess.store = new MongoStore({ mongooseConnection: mongoose.connection });
 }
 
+app.use(session(sess));
+
 // Init middleware
 app.use(express.json({ extended: false }));
 
@@ -41,8 +43,6 @@ app.use(express.json({ extended: false }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-
-app.use(session(sess));
 
 // Routes
 app.use('/', routes);
