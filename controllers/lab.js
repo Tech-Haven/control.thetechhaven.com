@@ -70,7 +70,7 @@ exports.getUserInfo = asyncHandler(async (req, res, next) => {
   const userObject = await getUserInfo(lab_username, lab_token);
 
   if (userObject.error) {
-    return next(new ErrorResponse(userObject.error, 401));
+    return next(new ErrorResponse(userObject.error.msg, 401));
   }
 
   res.status(200).send(userObject);
@@ -79,13 +79,13 @@ exports.getUserInfo = asyncHandler(async (req, res, next) => {
 // @desc    Get VM templates
 // @route   GET /api/v1/lab/templatepool/info
 // @access  Private
-exports.getTemplatePoolInfo = asyncHandler(async (req, res) => {
+exports.getTemplatePoolInfo = asyncHandler(async (req, res, next) => {
   const { lab_username, lab_token } = req.session;
 
   const templateObject = await getTemplateInfo(lab_username, lab_token);
 
   if (templateObject.error) {
-    return next(new ErrorResponse(templateObject.error, 401));
+    return next(new ErrorResponse(templateObject.error.msg, 401));
   }
 
   res.status(200).send(templateObject);
@@ -113,13 +113,13 @@ exports.createVm = asyncHandler(async (req, res, next) => {
   );
 
   if (createdVmId.error) {
-    return next(new ErrorResponse(createdVmId.error, 400));
+    return next(new ErrorResponse(createdVmId.error.msg, 400));
   }
 
   const vmObject = await getVmInfo(lab_username, lab_token, createdVmId);
 
   if (vmObject.error) {
-    return next(new ErrorResponse(vmObject.error, 400));
+    return next(new ErrorResponse(vmObject.error.msg, 400));
   }
 
   return res.status(200).send(vmObject);
@@ -128,13 +128,13 @@ exports.createVm = asyncHandler(async (req, res, next) => {
 // @desc    Returns all VM info for user
 // @route   GET /api/v1/lab/vm/info
 // @access  Private
-exports.getAllVmInfo = asyncHandler(async (req, res) => {
+exports.getAllVmInfo = asyncHandler(async (req, res, next) => {
   const { lab_username, lab_token } = req.session;
 
   const vmObject = await getAllVmInfo(lab_username, lab_token);
 
   if (vmObject.error) {
-    return next(new ErrorResponse(vmObject.error, 400));
+    return next(new ErrorResponse(vmObject.error.msg, 400));
   }
 
   res.status(200).send(vmObject);
@@ -143,7 +143,7 @@ exports.getAllVmInfo = asyncHandler(async (req, res) => {
 // @desc    Returns single VM info based on vmid
 // @route   GET /api/v1/lab/vm/info/:vmid
 // @access  Private
-exports.getVmInfo = asyncHandler(async (req, res) => {
+exports.getVmInfo = asyncHandler(async (req, res, next) => {
   const { vmid } = req.params;
 
   if (!vmid || isNaN(vmid)) {
@@ -155,7 +155,7 @@ exports.getVmInfo = asyncHandler(async (req, res) => {
   const vmObject = await getVmInfo(lab_username, lab_token, vmid);
 
   if (vmObject.error) {
-    return next(new ErrorResponse(vmObject.error, 400));
+    return next(new ErrorResponse(vmObject.error.msg, 400));
   }
 
   res.status(200).send(vmObject);
