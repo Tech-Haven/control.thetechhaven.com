@@ -7,6 +7,7 @@ module.exports = {
   description: 'Login to the lab server for use with Discord',
   args: true,
   usage: `<password>`,
+  disabled: true,
   async execute(message, args) {
     if (!args[0]) {
       return message.reply('Password is required!');

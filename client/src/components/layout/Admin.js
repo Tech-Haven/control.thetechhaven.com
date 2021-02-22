@@ -15,18 +15,18 @@ import { loadUsersFromDb } from '../../actions/admin';
 
 const useStyles = makeStyles({
   table: {
-    minWidth: 650
+    minWidth: 650,
   },
   tableHeader: {
-    fontWeight: 'bold'
-  }
+    fontWeight: 'bold',
+  },
 });
 
 const createData = (id, username) => {
   id += 1;
   return {
     id,
-    username
+    username,
   };
 };
 
@@ -47,7 +47,7 @@ const Admin = ({ auth, admin, getUsersFromDb }) => {
     return <Redirect to='/dashboard' />;
   }
 
-  let rows = admin.users.map(row => {
+  let rows = admin.users.map((row) => {
     return createData(row._id, row.username);
   });
   return (
@@ -66,10 +66,13 @@ const Admin = ({ auth, admin, getUsersFromDb }) => {
                       <TableCell className={classes.tableHeader}>
                         Username
                       </TableCell>
+                      <TableCell className={classes.tableHeader}>
+                        Registered to lab?
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {rows.map(row => (
+                    {rows.map((row) => (
                       <TableRow key={row.id}>
                         <TableCell component='th' scope='row'>
                           {row.id}
@@ -88,13 +91,13 @@ const Admin = ({ auth, admin, getUsersFromDb }) => {
   );
 };
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   auth: state.auth,
-  admin: state.admin
+  admin: state.admin,
 });
 
 const mapDispatchToProps = {
-  getUsersFromDb: loadUsersFromDb
+  getUsersFromDb: loadUsersFromDb,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Admin);
