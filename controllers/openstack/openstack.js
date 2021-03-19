@@ -4,17 +4,11 @@ const ErrorResponse = require('../../utils/errorResponse');
 const asyncHandler = require('../../middleware/async');
 const validateToken = require('./helpers/validateToken');
 
-const adminToken = process.env.OPENSTACK_ADMIN_TOKEN; // TODO: Fetch admin token from vault instead of hardcode
 const identityUrl = process.env.OPENSTACK_IDENTITY_URL;
 const imageUrl = process.env.OPENSTACK_IMAGE_URL;
 const computeUrl = process.env.OPENSTACK_COMPUTE_URL;
 
-const sendRequest = async (
-  method,
-  url,
-  token,
-  options = { admin: false, body: null }
-) => {
+const sendRequest = async (method, url, token, options = { body: null }) => {
   if (method === 'post' && !options.body) {
     return { error: { status: 400, msg: 'Post request requires body option' } };
   }
@@ -22,7 +16,7 @@ const sendRequest = async (
     method,
     url,
     headers: {
-      'X-Auth-Token': options.admin ? adminToken : token,
+      'X-Auth-Token': token,
       'Openstack-API-Version': 'compute 2.87',
     },
     data: method === 'post' ? options.body : null,
@@ -95,10 +89,7 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
   const data = await sendRequest(
     'get',
     `${identityUrl}/users`,
-    req.headers['x-auth-token'],
-    {
-      admin: true,
-    }
+    req.headers['x-auth-token']
   );
 
   if (data.error) {
