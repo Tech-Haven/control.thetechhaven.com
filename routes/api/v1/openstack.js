@@ -3,7 +3,6 @@ const {
   applicationCredentialAuth,
   validateToken,
   getUsers,
-  getUserByUsername,
   getImages,
   getImage,
   getFlavors,
@@ -24,7 +23,6 @@ const { protect, adminOnly } = require('../../../middleware/openstackAuth');
 router.route('/auth/tokens').post(applicationCredentialAuth);
 router.route('/auth/tokens').get(protect, validateToken);
 router.route('/users').get(protect, adminOnly, getUsers);
-router.route('/users/:user_name').get(protect, adminOnly, getUserByUsername);
 
 // Image
 router.route('/images').get(protect, getImages);

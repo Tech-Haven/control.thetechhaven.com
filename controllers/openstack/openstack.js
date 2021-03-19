@@ -106,33 +106,17 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(data.error.msg, data.error.status));
   }
 
-  res.status(200).json({ success: true, data: data.users });
-});
+  if (req.query.name) {
+    const queryUser = data.users.find((u) => u.name === req.query.name);
 
-// @desc    IDENTITY Get user by name
-// @route   GET /api/v1/openstack/users/:user_name
-// @access  Private/Admin
-exports.getUserByUsername = asyncHandler(async (req, res, next) => {
-  const data = await sendRequest(
-    'get',
-    `${identityUrl}/users`,
-    req.headers['x-auth-token'],
-    {
-      admin: true,
+    if (!queryUser) {
+      return next(new ErrorResponse(`User not found`, 404));
     }
-  );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
+    return res.status(200).json({ success: true, data: queryUser });
   }
 
-  const user = data.users.find((u) => u.name === req.params.user_name);
-
-  if (!user) {
-    return next(new ErrorResponse('User not found', 404));
-  }
-
-  res.status(200).json({ success: true, data: user });
+  res.status(200).json({ success: true, data: data.users });
 });
 
 // @desc    IMAGE Get all images
