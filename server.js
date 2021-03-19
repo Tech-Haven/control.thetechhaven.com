@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
 
-const startBot = require('./bot');
 const connectDB = require('./config/db');
 const routes = require('./routes/routes');
 const errorHandler = require('./middleware/error');
@@ -16,9 +15,6 @@ const app = express();
 
 // Connect Database
 connectDB();
-
-// Start the bot
-startBot();
 
 const sess = {
   secret: process.env.SESSION_SECRET,
