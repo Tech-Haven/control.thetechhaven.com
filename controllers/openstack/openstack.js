@@ -32,7 +32,6 @@ const sendRequest = async (
     const response = await axios(config);
     return response.data;
   } catch (error) {
-    console.error(error);
     if (error.response && error.response.status === 400) {
       return {
         error: { status: 400, msg: error.response.data.badRequest.message },
@@ -250,6 +249,13 @@ exports.getServer = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.createServer = asyncHandler(async (req, res, next) => {
   const { name, imageRef, flavorRef } = req.body;
+
+  if (!name || !imageRef || !flavorRef) {
+    return next(
+      new ErrorResponse('Please provide a name, imageRef, and flavorRef', 400)
+    );
+  }
+
   const body = {
     server: {
       name,
@@ -260,7 +266,7 @@ exports.createServer = asyncHandler(async (req, res, next) => {
   };
   const data = await sendRequest(
     'post',
-    `${computeUrl}/v2.1/servers`,
+    `${computeUrl}/servers`,
     req.headers['x-auth-token'],
     {
       body,
@@ -329,7 +335,7 @@ exports.importSSHKeypair = asyncHandler(async (req, res, next) => {
   const { publicKey } = req.body;
 
   if (!publicKey) {
-    return next(new ErrorResponse('Please provide a public key', 400));
+    return next(new ErrorResponse('Please provide a publicKey', 400));
   }
 
   const body = {

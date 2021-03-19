@@ -33,7 +33,7 @@ router.route('/flavors').get(getFlavors);
 router.route('/flavors/:flavor_id').get(getFlavor);
 router.route('/servers').get(getServers);
 router.route('/servers/:server_id').get(getServer);
-router.route('/server').post(createServer);
+router.route('/servers').post(createServer);
 router.route('/os-keypairs').get(getSSHKeypairs);
 router.route('/os-keypairs/create').post(createSSHKeypair);
 router.route('/os-keypairs/import').post(importSSHKeypair);
