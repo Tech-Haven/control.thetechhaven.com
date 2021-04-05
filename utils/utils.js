@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const Discord = require('discord.js')
 const FormData = require('form-data');
 const bcrypt = require('bcrypt');
 
@@ -12,7 +11,6 @@ const scope = process.env.SCOPE;
 const redirect_uri = process.env.REDIRECT_URI;
 const GUILD_ID = process.env.GUILD_ID;
 const discord_token_uri = `https://discordapp.com/api/oauth2/token`;
-
 
 // updateUser()
 // PARAMS: access_token, refresh_token
@@ -28,12 +26,12 @@ const updateUser = async (access_token, refresh_token) => {
     username,
     discriminator,
     avatar,
-    refresh_hash
+    refresh_hash,
   };
 
   let u = await User.findOneAndUpdate({ _id: id }, query, {
     upsert: true,
-    new: true
+    new: true,
   });
   return u;
 };
@@ -41,7 +39,7 @@ const updateUser = async (access_token, refresh_token) => {
 // exchangeCode()
 // PARAMS: access_code
 // RETURN: Access token response
-const exchangeCode = async access_code => {
+const exchangeCode = async (access_code) => {
   const data = new FormData();
 
   data.append(`client_id`, CLIENT_ID);
@@ -53,7 +51,7 @@ const exchangeCode = async access_code => {
 
   const r = await fetch(discord_token_uri, {
     method: 'POST',
-    body: data
+    body: data,
   });
 
   return r.json();
@@ -62,7 +60,7 @@ const exchangeCode = async access_code => {
 // refreshToken()
 // PARAMS: refresh_token
 // RETURN: Access token response
-const refreshToken = async refresh_token => {
+const refreshToken = async (refresh_token) => {
   const data = new FormData();
   data.append(`client_id`, CLIENT_ID);
   data.append(`client_secret`, CLIENT_SECRET);
@@ -73,7 +71,7 @@ const refreshToken = async refresh_token => {
 
   const r = await fetch(discord_token_uri, {
     method: 'POST',
-    body: data
+    body: data,
   });
 
   return r.json();
@@ -82,18 +80,18 @@ const refreshToken = async refresh_token => {
 // getMe()
 // PARAMS: access_token
 // RETURN: User information (id, username, discriminator, avatar)
-const getMe = async access_token => {
+const getMe = async (access_token) => {
   const r = await fetch(`https://discordapp.com/api/users/@me`, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${access_token}`
-    }
+      Authorization: `Bearer ${access_token}`,
+    },
   });
   const response = await r.json();
   if (r.status === 401) {
     return { error: { status: 401, msg: '401: Unauthorized' } };
   }
-  return response
+  return response;
 };
 
 // getGuildMembers()
@@ -105,8 +103,8 @@ const getGuildMembers = async () => {
     {
       method: 'GET',
       headers: {
-        Authorization: `Bot ${BOT_TOKEN}`
-      }
+        Authorization: `Bot ${BOT_TOKEN}`,
+      },
     }
   );
 
@@ -120,7 +118,7 @@ const getGuildMembers = async () => {
 // isGuildMember()
 // PARAMS: userId
 // RETURN: Boolean value if user is in the server or not
-const checkIfGuildMember = async userId => {
+const checkIfGuildMember = async (userId) => {
   const guildMember = await getGuildMember(userId);
   if (!guildMember.error) {
     return true;
@@ -131,7 +129,7 @@ const checkIfGuildMember = async userId => {
 // getGuildMember()
 // PARAMS: userId
 // RETURN: Guild member's information (user object, nickname, roles, when they joined)
-const getGuildMember = async userId => {
+const getGuildMember = async (userId) => {
   if (!userId) {
     return { error: { status: 401, msg: '401: Unauthorized.' } };
   }
@@ -140,8 +138,8 @@ const getGuildMember = async userId => {
     {
       method: 'GET',
       headers: {
-        Authorization: `Bot ${BOT_TOKEN}`
-      }
+        Authorization: `Bot ${BOT_TOKEN}`,
+      },
     }
   );
   const response = await r.json();
@@ -154,11 +152,11 @@ const getGuildMember = async userId => {
 // isStaff()
 // PARAMS: userId
 // RETURN: Boolean value if the user is staff or not
-const checkIfStaff = async userId => {
+const checkIfStaff = async (userId) => {
   const guildMember = await getGuildMember(userId);
   if (!guildMember.error) {
     const staffRoles = await getStaffRoles();
-    const staff = staffRoles.some(r => {
+    const staff = staffRoles.some((r) => {
       return guildMember.roles.includes(r.id);
     });
     if (staff) {
@@ -177,12 +175,12 @@ const getStaffRoles = async () => {
   const r = await fetch(`https://discordapp.com/api/guilds/${GUILD_ID}/roles`, {
     method: 'GET',
     headers: {
-      Authorization: `Bot ${BOT_TOKEN}`
-    }
+      Authorization: `Bot ${BOT_TOKEN}`,
+    },
   });
   const guildRoles = await r.json();
   let staffRoleFilter = ['Staff', 'Root', 'Server Admin'];
-  const staffRoles = guildRoles.filter(role => {
+  const staffRoles = guildRoles.filter((role) => {
     return staffRoleFilter.includes(role.name);
   });
   return staffRoles;

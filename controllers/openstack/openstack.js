@@ -2,7 +2,7 @@ const axios = require('axios');
 
 const ErrorResponse = require('../../utils/errorResponse');
 const asyncHandler = require('../../middleware/async');
-const validateToken = require('./helpers/validateToken');
+const applicationCredentialAuth = require('./helpers/applicationCredentialAuth');
 
 const identityUrl = process.env.OPENSTACK_IDENTITY_URL;
 const imageUrl = process.env.OPENSTACK_IMAGE_URL;
@@ -53,33 +53,23 @@ const sendRequest = async (method, url, token, options = { body: null }) => {
 // @access  Public
 exports.applicationCredentialAuth = asyncHandler(async (req, res, next) => {
   const { id, secret } = req.body;
-  const config = {
-    method: 'post',
-    url: `${identityUrl}/auth/tokens`,
-    data: {
-      auth: {
-        identity: {
-          methods: ['application_credential'],
-          application_credential: {
-            id,
-            secret,
-          },
-        },
-      },
-    },
-  };
 
-  const response = await axios(config);
-  return response.headers['x-subject-token'];
+  if (!id || !secret) {
+    return next(new ErrorResponse('Please provide an id and secret', 400));
+  }
+
+  const data = await applicationCredentialAuth(id, secret);
+  return res
+    .status(200)
+    .header('x-subject-token', data.headers['x-subject-token'])
+    .json({ success: true });
 });
 
 // @desc    IDENTITY Validate and show information for token
 // @route   GET /api/v1/openstack/auth/tokens
 // @access  Private
 exports.validateToken = asyncHandler(async (req, res, next) => {
-  const data = await validateToken(req.headers['x-auth-token']);
-
-  res.status(200).json({ success: true, data: data.data.token });
+  res.status(200).json({ success: true, data: req.validToken });
 });
 
 // @desc    IDENTITY Get all users
@@ -277,7 +267,7 @@ exports.createServer = asyncHandler(async (req, res, next) => {
 exports.getSSHKeypairs = asyncHandler(async (req, res, next) => {
   const data = await sendRequest(
     'get',
-    `https://lab.thetechhaven.com:8774/v2.1/os-keypairs`,
+    `${computeUrl}/os-keypairs`,
     req.headers['x-auth-token']
   );
 
@@ -305,7 +295,7 @@ exports.createSSHKeypair = asyncHandler(async (req, res, next) => {
 
   const data = await sendRequest(
     'post',
-    `https://lab.thetechhaven.com:8774/v2.1/os-keypairs`,
+    `${computeUrl}/os-keypairs`,
     req.headers['x-auth-token'],
     {
       body,
@@ -339,7 +329,7 @@ exports.importSSHKeypair = asyncHandler(async (req, res, next) => {
 
   const data = await sendRequest(
     'post',
-    `https://lab.thetechhaven.com:8774/v2.1/os-keypairs`,
+    `${computeUrl}/os-keypairs`,
     req.headers['x-auth-token'],
     {
       body,

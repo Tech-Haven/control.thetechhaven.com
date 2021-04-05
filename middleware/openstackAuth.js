@@ -12,15 +12,16 @@ exports.protect = asyncHandler(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new ErrorResponse('Not authorized to access this route', 401));
+    return next(new ErrorResponse('Invalid token', 401));
   }
 
   // Check if token is valid
   try {
-    await validateToken(token);
+    const tokenRes = await validateToken(token);
+    req.validToken = tokenRes.data;
     next();
   } catch (error) {
-    return next(new ErrorResponse('Not authorized to access this route', 401));
+    return next(new ErrorResponse('Invalid token', 401));
   }
 });
 
