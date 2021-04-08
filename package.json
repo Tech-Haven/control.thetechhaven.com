@@ -23,7 +23,7 @@
     "moment": "^2.26.0",
     "mongoose": "^5.10.2",
     "morgan": "^1.10.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "node-ssh": "^11.1.1",
     "node-vault": "^0.9.21",
     "sshpk": "^1.16.1",
