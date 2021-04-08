@@ -20,7 +20,7 @@ exports.vaultProtect = asyncHandler(async (req, res, next) => {
     await validateVaultToken(token);
     next();
   } catch (error) {
-    console.log(error.response);
+    console.log(error);
     return next(new ErrorResponse('Invalid vault token', 401));
   }
 });

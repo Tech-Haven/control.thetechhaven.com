@@ -2,7 +2,7 @@ import axios from 'axios';
 import download from 'downloadjs';
 import { USER_LOADED, AUTH_ERROR, LOGOUT, LOGIN } from './types';
 
-const VAULT_TOKEN = 'myroot';
+const VAULT_TOKEN = process.env.REACT_APP_VAULT_TOKEN;
 
 export const loadUser = () => async (dispatch) => {
   try {

@@ -1,5 +1,5 @@
 const axios = require('axios');
-
+const https = require('https');
 const ErrorResponse = require('../../utils/errorResponse');
 const asyncHandler = require('../../middleware/async');
 
@@ -16,12 +16,14 @@ const sendRequest = async (
   if (method === 'post' && !options.body) {
     return { error: { status: 400, msg: 'Post request requires body option' } };
   }
+  const agent = new https.Agent({ rejectUnauthorized: false });
   const config = {
     method,
     url,
     headers: {
       'X-Vault-Token': token,
     },
+    httpsAgent: agent,
     data: method === 'post' ? options.body : null,
   };
 
@@ -29,6 +31,7 @@ const sendRequest = async (
     const response = await axios(config);
     return response.data;
   } catch (error) {
+    console.error(error);
     if (error.response.status === 400) {
       return {
         error: {
@@ -64,7 +67,6 @@ exports.getSecretsByUser = asyncHandler(async (req, res, next) => {
       body: req.body,
     }
   );
-
   if (data.error) {
     return next(new ErrorResponse(data.error.msg, data.error.status));
   }
