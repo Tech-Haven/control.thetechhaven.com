@@ -2,24 +2,30 @@ const axios = require('axios');
 
 const identityUrl = process.env.OPENSTACK_IDENTITY_URL;
 
-const applicationCredentialAuth = async (id, secret) => {
+const passwordAuth = async (username, password) => {
   const config = {
     method: 'post',
     url: `${identityUrl}/auth/tokens`,
     data: {
       auth: {
         identity: {
-          methods: ['application_credential'],
-          application_credential: {
-            id,
-            secret,
+          methods: ['password'],
+          password: {
+            user: {
+              domain: {
+                name: 'Default',
+              },
+              name: username,
+              password,
+            },
           },
         },
       },
     },
   };
+
   const response = await axios(config);
   return response;
 };
 
-module.exports = applicationCredentialAuth;
+module.exports = passwordAuth;

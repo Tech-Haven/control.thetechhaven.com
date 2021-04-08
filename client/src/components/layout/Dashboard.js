@@ -2,8 +2,9 @@ import React, { Fragment } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import Spinner from '../layout/Spinner';
+import { downloadVpn } from '../../actions/auth';
 
-const Dashboard = ({ auth }) => {
+const Dashboard = ({ auth, downloadVpn }) => {
   if (auth.loading) {
     return <Spinner />;
   }
@@ -11,10 +12,20 @@ const Dashboard = ({ auth }) => {
     return <Redirect to='/login' />;
   }
 
+  const onClick = () => {
+    downloadVpn(auth.user.xAuthToken);
+  };
+
   const adminLink = (
     <Link to='/admin' className='btn'>
       Admin Panel
     </Link>
+  );
+
+  const vpnDownloadButton = (
+    <div onClick={onClick} className='btn btn-light'>
+      Download Lab VPN
+    </div>
   );
 
   return (
@@ -35,12 +46,18 @@ const Dashboard = ({ auth }) => {
           </div>
         </div>
       </div>
+      <div className='profile-grid my-1'>
+        <div className='profile-top bg-dark p-2'>
+          <h1>Lab</h1>
+          <div>{auth.user.xAuthToken ? vpnDownloadButton : null}</div>
+        </div>
+      </div>
     </Fragment>
   );
 };
 
-const mapStateToProps = state => ({
-  auth: state.auth
+const mapStateToProps = (state) => ({
+  auth: state.auth,
 });
 
-export default connect(mapStateToProps)(Dashboard);
+export default connect(mapStateToProps, { downloadVpn })(Dashboard);

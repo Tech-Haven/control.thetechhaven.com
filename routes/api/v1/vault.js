@@ -6,10 +6,10 @@ const {
 
 const router = express.Router();
 
-const { protect } = require('../../../middleware/openstackAuth');
+const { vaultProtect } = require('../../../middleware/vaultAuth');
 
 // Identity
-router.route('/secrets/:user').get(getSecretsByUser);
-router.route('/secrets/:user').post(createSecret);
+router.route('/secrets/:user').get(vaultProtect, getSecretsByUser);
+router.route('/secrets/:user').post(vaultProtect, createSecret);
 
 module.exports = router;

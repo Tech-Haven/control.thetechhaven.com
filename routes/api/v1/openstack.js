@@ -3,6 +3,7 @@ const {
   applicationCredentialAuth,
   validateToken,
   getUsers,
+  bootstrapNewUser,
   getImages,
   getImage,
   getFlavors,
@@ -18,6 +19,12 @@ const {
 const router = express.Router();
 
 const { protect, adminOnly } = require('../../../middleware/openstackAuth');
+const { vaultProtect } = require('../../../middleware/vaultAuth');
+
+// Custom
+router
+  .route('/bootstrap')
+  .post(protect, vaultProtect, adminOnly, bootstrapNewUser);
 
 // Identity
 router.route('/auth/tokens').post(applicationCredentialAuth);

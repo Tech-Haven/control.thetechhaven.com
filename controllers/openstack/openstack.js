@@ -3,10 +3,15 @@ const axios = require('axios');
 const ErrorResponse = require('../../utils/errorResponse');
 const asyncHandler = require('../../middleware/async');
 const applicationCredentialAuth = require('./helpers/applicationCredentialAuth');
+const generateRandomPassword = require('./helpers/generateRandomPassword');
+const passwordAuth = require('./helpers/passwordAuth');
+const createSecret = require('../vault/helpers/createSecret');
 
 const identityUrl = process.env.OPENSTACK_IDENTITY_URL;
 const imageUrl = process.env.OPENSTACK_IMAGE_URL;
 const computeUrl = process.env.OPENSTACK_COMPUTE_URL;
+
+const MEMBER_ROLE_ID = process.env.OPENSTACK_MEMBER_ROLE_ID;
 
 const sendRequest = async (method, url, token, options = { body: null }) => {
   if (method === 'post' && !options.body) {
@@ -26,6 +31,7 @@ const sendRequest = async (method, url, token, options = { body: null }) => {
     const response = await axios(config);
     return response.data;
   } catch (error) {
+    console.log(error.response.data);
     if (error.response && error.response.status === 400) {
       return {
         error: { status: 400, msg: error.response.data.badRequest.message },
@@ -35,6 +41,17 @@ const sendRequest = async (method, url, token, options = { body: null }) => {
     } else if (error.response && error.response.status === 404) {
       return {
         error: { status: 404, msg: error.response.data.itemNotFound.message },
+      };
+    } else if (
+      error.response &&
+      error.response.status === 409 &&
+      error.response.data.error.title === 'Conflict'
+    ) {
+      return {
+        error: {
+          status: 409,
+          msg: error.response.data.error.message,
+        },
       };
     } else if (error.response && error.response.status === 409) {
       return {
@@ -69,7 +86,7 @@ exports.applicationCredentialAuth = asyncHandler(async (req, res, next) => {
 // @route   GET /api/v1/openstack/auth/tokens
 // @access  Private
 exports.validateToken = asyncHandler(async (req, res, next) => {
-  res.status(200).json({ success: true, data: req.validToken });
+  res.status(200).json({ success: true, data: req.xAuthToken });
 });
 
 // @desc    IDENTITY Get all users
@@ -97,6 +114,123 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
   }
 
   res.status(200).json({ success: true, data: data.users });
+});
+
+// @desc    Bootstraps a new user registration. Creates user, project, assigns role, creates application creds, and saves them to Vault
+// @route   POST /api/v1/openstack/bootstrap
+// @access  Private/Admin (X-Auth-Token & X-Vault-Token)
+exports.bootstrapNewUser = asyncHandler(async (req, res, next) => {
+  const { username, description } = req.body;
+
+  if (!username) {
+    return next(
+      new ErrorResponse('Invalid request body. Expected username.', '400')
+    );
+  }
+
+  // Create project for new user to get default_project_id
+  const projectData = await sendRequest(
+    'post',
+    `${identityUrl}/projects`,
+    req.headers['x-auth-token'],
+    { body: { project: { name: username } } }
+  );
+
+  if (projectData.error) {
+    return next(
+      new ErrorResponse(projectData.error.msg, projectData.error.status)
+    );
+  }
+
+  const projectId = projectData.project.id;
+
+  const password = generateRandomPassword();
+
+  const newUserData = await sendRequest(
+    'post',
+    `${identityUrl}/users`,
+    req.headers['x-auth-token'],
+    {
+      body: {
+        user: {
+          default_project_id: projectId,
+          domain_id: 'default',
+          name: username,
+          password,
+          description,
+        },
+      },
+    }
+  );
+
+  if (newUserData.error) {
+    return next(
+      new ErrorResponse(newUserData.error.msg, newUserData.error.status)
+    );
+  }
+
+  const newUserId = newUserData.user.id;
+
+  // Assign the new user _member_ role for their project
+  const roleAssignData = await sendRequest(
+    'put',
+    `${identityUrl}/projects/${projectId}/users/${newUserId}/roles/${MEMBER_ROLE_ID}`,
+    req.headers['x-auth-token']
+  );
+
+  if (roleAssignData.error) {
+    return next(
+      new ErrorResponse(roleAssignData.error.msg, roleAssignData.error.status)
+    );
+  }
+
+  // Get token for new user
+  const userTokenData = await passwordAuth(username, password);
+  const userToken = userTokenData.headers['x-subject-token'];
+
+  // Create the api application credentials
+  const applicationCredData = await sendRequest(
+    'post',
+    `${identityUrl}/users/${newUserId}/application_credentials`,
+    userToken,
+    {
+      body: {
+        application_credential: {
+          name: 'api',
+        },
+      },
+    }
+  );
+
+  if (applicationCredData.error) {
+    return next(
+      new ErrorResponse(
+        applicationCredData.error.msg,
+        applicationCredData.error.status
+      )
+    );
+  }
+
+  const applicationCredentialId = applicationCredData.application_credential.id;
+  const applicationCredentialSecret =
+    applicationCredData.application_credential.secret;
+
+  const secretData = await createSecret(
+    applicationCredentialId,
+    applicationCredentialSecret,
+    username,
+    req.headers['x-vault-token']
+  );
+
+  if (secretData.error) {
+    return next(new ErrorResponse('Create secret failed', 500));
+  }
+
+  // Send password in response
+  newUserData.user.password = password;
+  newUserData.user.token = userToken;
+
+  res.status(200).json({ success: true, data: newUserData.user });
 });
 
 // @desc    IMAGE Get all images

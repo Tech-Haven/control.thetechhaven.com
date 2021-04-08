@@ -3,6 +3,10 @@ const axios = require('axios');
 const ErrorResponse = require('../../utils/errorResponse');
 const asyncHandler = require('../../middleware/async');
 
+const createSecret = require('./helpers/createSecret');
+
+const VAULT_URL = process.env.VAULT_URL;
+
 const sendRequest = async (
   method,
   url,
@@ -54,7 +58,7 @@ const sendRequest = async (
 exports.getSecretsByUser = asyncHandler(async (req, res, next) => {
   const data = await sendRequest(
     'get',
-    `http://127.0.0.1:8200/v1/lab.thetechhaven.com/data/${req.params.user}`,
+    `${VAULT_URL}/v1/lab.thetechhaven.com/data/${req.params.user}`,
     req.headers['x-vault-token'],
     {
       body: req.body,
@@ -88,20 +92,16 @@ exports.createSecret = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const data = await sendRequest(
-    'post',
-    `http://127.0.0.1:8200/v1/lab.thetechhaven.com/data/${req.params.user}`,
-    req.headers['x-vault-token'],
-    {
-      body: {
-        data: req.body,
-      },
-    }
+  const data = await createSecret(
+    api_application_credential_id,
+    api_application_credential_secret,
+    req.params.user,
+    req.headers['x-vault-token']
   );
 
   if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
+    return next(new ErrorResponse('Create secret failed', 500));
   }
 
-  return res.status(200).json({ success: true, data: req.body });
+  return res.status(200).json({ success: true, data });
 });

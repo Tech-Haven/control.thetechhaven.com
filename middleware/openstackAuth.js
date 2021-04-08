@@ -18,7 +18,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
   // Check if token is valid
   try {
     const tokenRes = await validateToken(token);
-    req.validToken = tokenRes.data;
+    req.xAuthToken = tokenRes.data.token;
     next();
   } catch (error) {
     return next(new ErrorResponse('Invalid token', 401));
