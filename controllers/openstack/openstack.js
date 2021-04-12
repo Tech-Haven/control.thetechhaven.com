@@ -377,6 +377,7 @@ exports.createServer = asyncHandler(async (req, res, next) => {
       imageRef,
       flavorRef,
       networks: 'auto',
+      key_name: 'api-keypair',
     },
   };
   const data = await sendRequest(
@@ -401,7 +402,7 @@ exports.createServer = asyncHandler(async (req, res, next) => {
 exports.getSSHKeypairs = asyncHandler(async (req, res, next) => {
   const data = await sendRequest(
     'get',
-    `${computeUrl}/os-keypairs`,
+    `${computeUrl}/os-keypairs/api-keypair`,
     req.headers['x-auth-token']
   );
 
