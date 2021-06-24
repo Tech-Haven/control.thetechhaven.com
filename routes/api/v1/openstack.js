@@ -29,20 +29,20 @@ router
 // Identity
 router.route('/auth/tokens').post(applicationCredentialAuth);
 router.route('/auth/tokens').get(protect, validateToken);
-router.route('/users').get(protect, adminOnly, getUsers);
+router.route('/users').get(adminOnly, getUsers);
 
 // Image
 router.route('/images').get(protect, getImages);
 router.route('/images/:image_id').get(protect, getImage);
 
 // Compute
-router.route('/flavors').get(getFlavors);
-router.route('/flavors/:flavor_id').get(getFlavor);
-router.route('/servers').get(getServers);
-router.route('/servers/:server_id').get(getServer);
-router.route('/servers').post(createServer);
-router.route('/os-keypairs').get(getSSHKeypairs);
-router.route('/os-keypairs/create').post(createSSHKeypair);
-router.route('/os-keypairs/import').post(importSSHKeypair);
+router.route('/flavors').get(protect, getFlavors);
+router.route('/flavors/:flavor_id').get(protect, getFlavor);
+router.route('/servers').get(protect, getServers);
+router.route('/servers/:server_id').get(protect, getServer);
+router.route('/servers').post(protect, createServer);
+router.route('/os-keypairs').get(protect, getSSHKeypairs);
+router.route('/os-keypairs/create').post(protect, createSSHKeypair);
+router.route('/os-keypairs/import').post(protect, importSSHKeypair);
 
 module.exports = router;

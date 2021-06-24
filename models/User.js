@@ -4,22 +4,25 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   _id: {
     type: String,
-    required: true
+    required: true,
   },
   username: {
     type: String,
-    required: true
+    required: true,
   },
   discriminator: {
     type: String,
-    required: true
+    required: true,
   },
   avatar: {
-    type: String
+    type: String,
   },
   refresh_hash: {
-    type: String
-  }
+    type: String,
+  },
+  forumUserId: {
+    type: String,
+  },
 });
 
 module.exports = User = mongoose.model('user', UserSchema);

@@ -27,42 +27,8 @@ const sendRequest = async (method, url, token, options = { body: null }) => {
     data: method === 'post' ? options.body : null,
   };
 
-  try {
-    const response = await axios(config);
-    return response.data;
-  } catch (error) {
-    console.log(error.response.data);
-    if (error.response && error.response.status === 400) {
-      return {
-        error: { status: 400, msg: error.response.data.badRequest.message },
-      };
-    } else if (error.response && error.response.status === 401) {
-      return { error: { status: 401, msg: error.response.data.error.message } };
-    } else if (error.response && error.response.status === 404) {
-      return {
-        error: { status: 404, msg: error.response.data.itemNotFound.message },
-      };
-    } else if (
-      error.response &&
-      error.response.status === 409 &&
-      error.response.data.error.title === 'Conflict'
-    ) {
-      return {
-        error: {
-          status: 409,
-          msg: error.response.data.error.message,
-        },
-      };
-    } else if (error.response && error.response.status === 409) {
-      return {
-        error: {
-          status: 409,
-          msg: error.response.data.conflictingRequest.message,
-        },
-      };
-    }
-    return { error: { status: 500, msg: error } };
-  }
+  const response = await axios(config);
+  return response.data;
 };
 
 // @desc    IDENTITY Authenticate via application credentials and return token
@@ -98,10 +64,6 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
     `${identityUrl}/users`,
     req.headers['x-auth-token']
   );
-
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
 
   if (req.query.name) {
     const queryUser = data.users.find((u) => u.name === req.query.name);
@@ -243,10 +205,6 @@ exports.getImages = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token']
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   if (req.query.name) {
     const queryImage = data.images.find(
       (i) => i.name === req.query.name.toLowerCase()
@@ -272,10 +230,6 @@ exports.getImage = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token']
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   res.status(200).json({ success: true, data: data });
 });
 
@@ -288,10 +242,6 @@ exports.getFlavors = asyncHandler(async (req, res, next) => {
     `${computeUrl}/flavors`,
     req.headers['x-auth-token']
   );
-
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
 
   if (req.query.name) {
     const queryFlavor = data.flavors.find(
@@ -318,10 +268,6 @@ exports.getFlavor = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token']
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   res.status(200).json({ success: true, data: data });
 });
 
@@ -335,10 +281,6 @@ exports.getServers = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token']
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   res.status(200).json({ success: true, data: data.servers });
 });
 
@@ -351,10 +293,6 @@ exports.getServer = asyncHandler(async (req, res, next) => {
     `${computeUrl}/servers/${req.params.server_id}`,
     req.headers['x-auth-token']
   );
-
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
 
   res.status(200).json({ success: true, data: data.server });
 });
@@ -370,6 +308,13 @@ exports.createServer = asyncHandler(async (req, res, next) => {
       new ErrorResponse('Please provide a name, imageRef, and flavorRef', 400)
     );
   }
+
+  // Make sure user has a keypair before creating the server
+  await sendRequest(
+    'get',
+    `${computeUrl}/os-keypairs/api-keypair`,
+    req.headers['x-auth-token']
+  );
 
   const body = {
     server: {
@@ -389,10 +334,6 @@ exports.createServer = asyncHandler(async (req, res, next) => {
     }
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   res.status(200).json({ success: true, data: data.server });
 });
 
@@ -406,15 +347,7 @@ exports.getSSHKeypairs = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token']
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
-  if (Array.isArray(data.keypairs) && !data.keypairs.length) {
-    return next(new ErrorResponse('No keypairs found', 404));
-  }
-
-  res.status(200).json({ success: true, data: data.keypairs });
+  res.status(200).json({ success: true, data: data.keypair });
 });
 
 // @desc    COMPUTE No public key provided by user. Generate a new ssh key and return keypair + private key.
@@ -437,10 +370,6 @@ exports.createSSHKeypair = asyncHandler(async (req, res, next) => {
     }
   );
 
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
-
   res.status(200).json({ success: true, data: data.keypair });
 });
 
@@ -448,16 +377,16 @@ exports.createSSHKeypair = asyncHandler(async (req, res, next) => {
 // @route   POST /api/v1/openstack/os-keypairs/import
 // @access  Private
 exports.importSSHKeypair = asyncHandler(async (req, res, next) => {
-  const { publicKey } = req.body;
+  const { public_key } = req.body;
 
-  if (!publicKey) {
-    return next(new ErrorResponse('Please provide a publicKey', 400));
+  if (!public_key) {
+    return next(new ErrorResponse('Please provide a public_key', 400));
   }
 
   const body = {
     keypair: {
       name: `api-keypair`,
-      publicKey,
+      public_key,
       type: 'ssh',
     },
   };
@@ -470,10 +399,6 @@ exports.importSSHKeypair = asyncHandler(async (req, res, next) => {
       body,
     }
   );
-
-  if (data.error) {
-    return next(new ErrorResponse(data.error.msg, data.error.status));
-  }
 
   res.status(200).json({ success: true, data: data.keypair });
 });
