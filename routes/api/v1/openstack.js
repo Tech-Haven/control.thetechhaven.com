@@ -14,17 +14,16 @@ const {
   getSSHKeypairs,
   createSSHKeypair,
   importSSHKeypair,
+  getAppCreds,
 } = require('../../../controllers/openstack/openstack');
 
 const router = express.Router();
 
 const { protect, adminOnly } = require('../../../middleware/openstackAuth');
-const { vaultProtect } = require('../../../middleware/vaultAuth');
 
 // Custom
-router
-  .route('/bootstrap')
-  .post(protect, vaultProtect, adminOnly, bootstrapNewUser);
+router.route('/bootstrap').post(adminOnly, bootstrapNewUser);
+router.route('/app-creds/:username_id').get(adminOnly, getAppCreds);
 
 // Identity
 router.route('/auth/tokens').post(applicationCredentialAuth);

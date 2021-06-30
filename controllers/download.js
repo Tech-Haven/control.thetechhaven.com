@@ -13,7 +13,7 @@ const VPN_WEBHOOK_URL = process.env.VPN_WEBHOOK_URL;
 const ssh = new NodeSSH();
 
 // @desc    Create a send new vpn file to API server
-// @route   GET /api/v1/downloads/vpn
+// @route   GET /api/v1/download/vpn
 // @access  Private (X-Auth-Token)
 exports.createAndGetVpnFile = asyncHandler(async (req, res, next) => {
   const client = req.xAuthToken.user.name;
@@ -49,7 +49,7 @@ exports.createAndGetVpnFile = asyncHandler(async (req, res, next) => {
 });
 
 // @desc    Download ovpn for user token
-// @route   GET /api/v1/downloads
+// @route   GET /api/v1/download
 // @access  Private (X-Auth-Token)
 exports.download = asyncHandler(async (req, res, next) => {
   const username = req.xAuthToken.user.name;

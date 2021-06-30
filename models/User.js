@@ -8,11 +8,9 @@ const UserSchema = new Schema({
   },
   username: {
     type: String,
-    required: true,
   },
   discriminator: {
     type: String,
-    required: true,
   },
   avatar: {
     type: String,
@@ -21,6 +19,12 @@ const UserSchema = new Schema({
     type: String,
   },
   forumUserId: {
+    type: String,
+  },
+  openstackAppCredId: {
+    type: String,
+  },
+  openstackAppCredSecret: {
     type: String,
   },
 });
