@@ -5,7 +5,8 @@ const asyncHandler = require('../../middleware/async');
 const applicationCredentialAuth = require('./helpers/applicationCredentialAuth');
 const generateRandomPassword = require('./helpers/generateRandomPassword');
 const passwordAuth = require('./helpers/passwordAuth');
-const createSecret = require('../vault/helpers/createSecret');
+
+const User = require('../../models/User');
 
 const identityUrl = process.env.OPENSTACK_IDENTITY_URL;
 const imageUrl = process.env.OPENSTACK_IMAGE_URL;
@@ -80,7 +81,7 @@ exports.getUsers = asyncHandler(async (req, res, next) => {
 
 // @desc    Bootstraps a new user registration. Creates user, project, assigns role, creates application creds, and saves them to Vault
 // @route   POST /api/v1/openstack/bootstrap
-// @access  Private/Admin (X-Auth-Token & X-Vault-Token)
+// @access  Private/Admin (X-Auth-Token)
 exports.bootstrapNewUser = asyncHandler(async (req, res, next) => {
   const { username, description } = req.body;
 
@@ -97,12 +98,6 @@ exports.bootstrapNewUser = asyncHandler(async (req, res, next) => {
     req.headers['x-auth-token'],
     { body: { project: { name: username } } }
   );
-
-  if (projectData.error) {
-    return next(
-      new ErrorResponse(projectData.error.msg, projectData.error.status)
-    );
-  }
 
   const projectId = projectData.project.id;
 
@@ -125,26 +120,14 @@ exports.bootstrapNewUser = asyncHandler(async (req, res, next) => {
     }
   );
 
-  if (newUserData.error) {
-    return next(
-      new ErrorResponse(newUserData.error.msg, newUserData.error.status)
-    );
-  }
-
   const newUserId = newUserData.user.id;
 
   // Assign the new user _member_ role for their project
-  const roleAssignData = await sendRequest(
+  await sendRequest(
     'put',
     `${identityUrl}/projects/${projectId}/users/${newUserId}/roles/${MEMBER_ROLE_ID}`,
     req.headers['x-auth-token']
   );
-
-  if (roleAssignData.error) {
-    return next(
-      new ErrorResponse(roleAssignData.error.msg, roleAssignData.error.status)
-    );
-  }
 
   // Get token for new user
   const userTokenData = await passwordAuth(username, password);
@@ -164,29 +147,23 @@ exports.bootstrapNewUser = asyncHandler(async (req, res, next) => {
     }
   );
 
-  if (applicationCredData.error) {
-    return next(
-      new ErrorResponse(
-        applicationCredData.error.msg,
-        applicationCredData.error.status
-      )
-    );
-  }
-
   const applicationCredentialId = applicationCredData.application_credential.id;
   const applicationCredentialSecret =
     applicationCredData.application_credential.secret;
+  const s = description.split('#');
 
-  const secretData = await createSecret(
-    applicationCredentialId,
-    applicationCredentialSecret,
-    username,
-    req.headers['x-vault-token']
-  );
+  const query = {
+    _id: username,
+    username: s[0],
+    discriminator: s[1],
+    openstackAppCredId: applicationCredentialId,
+    openstackAppCredSecret: applicationCredentialSecret,
+  };
 
-  if (secretData.error) {
-    return next(new ErrorResponse('Create secret failed', 500));
-  }
+  await User.findOneAndUpdate({ _id: username }, query, {
+    upsert: true,
+    new: true,
+  });
 
   // Send password in response
   newUserData.user.password = password;
@@ -401,4 +378,20 @@ exports.importSSHKeypair = asyncHandler(async (req, res, next) => {
   );
 
   res.status(200).json({ success: true, data: data.keypair });
+});
+
+// @desc    LOCAL Get app creds from Mongo
+// @route   GET /api/v1/openstack/appCreds/:username_id
+// @access  Private (Admin)
+exports.getAppCreds = asyncHandler(async (req, res, next) => {
+  const user = await User.findById({ _id: req.params.username_id });
+  const { _id, openstackAppCredId, openstackAppCredSecret } = user;
+  res.status(200).json({
+    success: true,
+    data: {
+      _id,
+      application_credential_id: openstackAppCredId,
+      application_credential_secret: openstackAppCredSecret,
+    },
+  });
 });
